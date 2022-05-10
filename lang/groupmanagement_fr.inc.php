@@ -2,6 +2,11 @@
 
 return [
 
+    
+    // tools/groupmanagement/actions/GroupManagementAction.php
+    'GRPMNGT_ACTION_NO_USER' => 'L\'action \'{{groupmanagement}}\' est réservée aux personnes connectées.',
+    'GRPMNGT_ACTION_NO_OPTIONS' => 'Les options de l\'action \'{{groupmanagement}}\' ne sont pas correctement paramétrées.',
+
     // tools/groupmanagement/fields/AutoRegisterLinkedEntryAtCreationField.php
 
     'GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG' => 'Il n\'a pas été possible de mettre à jour la fiche liée car %{errorOrigin} !',
@@ -16,4 +21,8 @@ return [
     'GRPMNGT_AUTOREGISTERLINKEDENTRY_NOT_ALL_UPDATED_MSG' => 'Mise à jour réussie pour les fiches filles \'%{entriesOK}\' mais avec des erreurs pour les fiches \'%{entriesNotOk}\'!',
     'GRPMNGT_AUTOREGISTERLINKEDENTRY_NOT_UPDATED_MSG' => 'Mise à jour non réussie pour les fiches filles \'%{entriesNotOk}\'!',
 
+    // tools/groupmanagement/templates/actions/groupmanagement*.twig
+    'GRPMNGT_ACTION_TITLE' => 'Gestion des groupes de droits d\'accès',
+    'GRPMNGT_ACTION_MANAGE_OPTIONS' => 'Gérer les options',
+    'GRPMNGT_ACTION_MANAGE_OPTIONS_TITLE' => 'Gestion des options',
 ];

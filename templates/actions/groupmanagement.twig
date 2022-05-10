@@ -1,0 +1,14 @@
+<div class="well">
+  {% if isAdmin %}
+    <div class="pull-right">
+      <form action="" method="post" style="display: inline">
+        <input type="hidden" name="view" value="options">
+        <button type="submit" class="btn btn-default btn-xs btn-icon" title="{{ _t('GRPMNGT_ACTION_MANAGE_OPTIONS') }}"><i class="fas fa-cogs"></i></button>
+      </form>
+    </div>
+  {% endif %}
+  <h2>{{ _t('GRPMNGT_ACTION_TITLE') }}</h2>
+  {% if errorMsg %}
+    {{ include("@templates/alert-message.twig",{type:"danger",message:errorMsg}) }}
+  {% endif %}
+</div>

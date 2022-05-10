@@ -1,0 +1,12 @@
+<div class="well">
+  <h2>{{ _t('GRPMNGT_ACTION_TITLE') }}</h2>
+  <div class="well">
+    <h3>{{ _t('GRPMNGT_ACTION_MANAGE_OPTIONS_TITLE') }}</h3>
+    <form id="groupmanagementOptions" action="" method="post">
+      <input type="hidden" name="view" value="options">
+    </form>
+
+    <button class="btn btn-primary btn-xs" type="submit" form="groupmanagementOptions">{{ _t('SAVE') }}</button>
+    <a class="btn btn-default btn-xs" href="{{ url({params:{}}) }}">{{ _t('GO_BACK') }}</a>
+  </div>
+</div>

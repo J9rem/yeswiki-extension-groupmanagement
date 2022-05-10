@@ -1,0 +1,7 @@
+label: _t(GRPMNGT_ACTION_TITLE)
+position: 1200
+onlyForAdmins: true
+previewHeight: 200px
+actions:
+  groupmanagement:
+    label: _t(GRPMNGT_ACTION_TITLE)
