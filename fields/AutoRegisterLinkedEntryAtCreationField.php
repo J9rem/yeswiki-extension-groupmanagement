@@ -92,14 +92,14 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
         $dbService = $this->getService(DbService::class);
 
         if (empty($this->name) || strval(intval($this->name)) != strval($this->name)) {
-            flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                'errorOrigin' => _t('CUSTOM_AUTOREGISTERLINKEDENTRY_FORM_ERROR')
+            flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
+                'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_FORM_ERROR')
             ]), 'error');
         } else {
             $form = $formManager->getOne($this->name);
             if (empty($form)) {
-                flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                    'errorOrigin' => _t('CUSTOM_AUTOREGISTERLINKEDENTRY_NO_FORM', [
+                flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
+                    'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_FORM', [
                         'formId' => $this->name
                     ])
                 ]), 'error');
@@ -115,8 +115,8 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                         if (trim($field->getLinkedObjectName()) == $entry['id_typeannonce']) {
                             $fields = [$field];
                         } else {
-                            flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                                'errorOrigin' => _t('CUSTOM_AUTOREGISTERLINKEDENTRY_NO_FIELDTYPE', [
+                            flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
+                                'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_FIELDTYPE', [
                                     'formId' => $this->name,
                                     'fieldName' => $fieldName,
                                     'currentFormId' => $entry['id_typeannonce']
@@ -124,8 +124,8 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                             ]), 'error');
                         }
                     } else {
-                        flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                            'errorOrigin' => _t('CUSTOM_AUTOREGISTERLINKEDENTRY_NO_THIS_FIELDNAME', [
+                        flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
+                            'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_THIS_FIELDNAME', [
                                 'formId' => $this->name,
                                 'fieldName' => $fieldName
                             ])
@@ -145,8 +145,8 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                         }
                     }
                     if (empty($fields)) {
-                        flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                            'errorOrigin' => _t('CUSTOM_AUTOREGISTERLINKEDENTRY_NO_FIELDNAMES', [
+                        flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
+                            'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_FIELDNAMES', [
                                 'formId' => $this->name
                             ])
                         ]), 'error');
@@ -158,8 +158,8 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                         'user' => $user['name']
                     ]);
                     if (empty($entries)) {
-                        flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                            'errorOrigin' => _t('CUSTOM_AUTOREGISTERLINKEDENTRY_NO_ENTRIES', [
+                        flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
+                            'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_ENTRIES', [
                                 'formId' => $this->name
                             ])
                         ]), 'warning');
@@ -178,7 +178,7 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                             }
                         }
                         if ((0 < count($updatedEntries)) && (count($updatedEntries) < count($entries))) {
-                            flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_NOT_ALL_UPDATED_MSG', [
+                            flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NOT_ALL_UPDATED_MSG', [
                                 'entriesOK' => implode(",", $updatedEntries),
                                 'entriesNotOk' => implode(",", array_map(function ($entryUpdated) {
                                     return $entryUpdated['id_fiche'];
@@ -187,17 +187,17 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                                 })))
                             ]), 'error');
                         } elseif (count($updatedEntries) == 0) {
-                            flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_NOT_UPDATED_MSG', [
+                            flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NOT_UPDATED_MSG', [
                                 'entriesNotOk' => implode(",", array_map(function ($entryUpdated) {
                                     return $entryUpdated['id_fiche'];
                                 }, $entries))
                             ]), 'error');
                         } elseif (count($updatedEntries) == 1) {
-                            flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_OK_ONE_MSG', [
+                            flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_OK_ONE_MSG', [
                                 'entry' => $entries[array_key_first($entries)]['id_fiche']
                             ]), 'success');
                         } else {
-                            flash(_t('CUSTOM_AUTOREGISTERLINKEDENTRY_OK_MSG', [
+                            flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_OK_MSG', [
                                 'entries' => implode(",", array_map(function ($entryUpdated) {
                                     return $entryUpdated['id_fiche'];
                                 }, $entries))
