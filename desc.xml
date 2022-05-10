@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<plugin name="groupmanagement" version="0.1" active="1">
+  <author>Jérémy Dufraisse</author>
+  <author>Habitat participatif France</author>
+  <label>groupmanagement</label>
+  <desc>Gestion avancés des droits des fiches</desc>
+</plugin>
