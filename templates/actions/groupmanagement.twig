@@ -7,8 +7,31 @@
       </form>
     </div>
   {% endif %}
-  <h2>{{ _t('GRPMNGT_ACTION_TITLE') }}</h2>
+  <h2>{{ title }}</h2>
   {% if errorMsg %}
     {{ include("@templates/alert-message.twig",{type:"danger",message:errorMsg}) }}
+  {% elseif entriesWhereAdmin is not empty %}
+    <form action="" method="post" class="form-horizontal">
+      {{ include("@bazar/inputs/select.twig",{
+        field:{
+          propertyName: "selectedEntry",
+          required: true,
+          type: "liste",
+          label: selectentrylabel,
+        },
+        value: selectedEntry,
+        options: entriesWhereAdmin,
+      }) }}
+      {# TODO manage autorefresh when selecting entry #}
+      {% if selectedEntry is not empty %}
+        {# TODO checkbox drag n drop #}
+      {% endif %}
+      <button type="submit" class="btn btn-primary" title="{{ _t('SAVE') }}">{{ _t('SAVE') }}</button>
+    </form>
+  {% else %}
+    {{ include("@templates/alert-message.twig",{
+      type: "info",
+      message: noentrylabel,
+    }) }}
   {% endif %}
 </div>

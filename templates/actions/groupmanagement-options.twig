@@ -1,9 +1,73 @@
 <div class="well">
-  <h2>{{ _t('GRPMNGT_ACTION_TITLE') }}</h2>
+  <h2>{{ title }}</h2>
   <div class="well">
     <h3>{{ _t('GRPMNGT_ACTION_MANAGE_OPTIONS_TITLE') }}</h3>
-    <form id="groupmanagementOptions" action="" method="post">
+    {% if saved != "not-needed" %}
+      {{ include("@templates/alert-message.twig",{
+          type: saved == "ok" ? "success" : "danger",
+          message: saved == "ok" ? _t('GRPMNGT_ACTION_OPTIONS_SAVED')  : _t('GRPMNGT_ACTION_OPTIONS_NOT_SAVED'),
+        }) }}
+    {% endif %}
+    <form id="groupmanagementOptions" class="form-horizontal" action="" method="post">
       <input type="hidden" name="view" value="options">
+      <input type="hidden" name="action" value="save">
+      {{ include("@bazar/inputs/select.twig",{
+        field:{
+          propertyName: "options[parentsForm]",
+          required: true,
+          type: "liste",
+          label: _t('GRPMNGT_ACTION_PARENTSFORM_LABEL'),
+          hint: _t('GRPMNGT_ACTION_PARENTSFORM_HINT'),
+        },
+        value: options.parentsForm,
+        options: forms,
+      }) }}
+      {{ include("@bazar/inputs/select.twig",{
+        field:{
+          propertyName: "options[childrenForm]",
+          required: true,
+          type: "liste",
+          label: _t('GRPMNGT_ACTION_CHILDRENFORM_LABEL'),
+          hint: _t('GRPMNGT_ACTION_CHILDRENFORM_HINT'),
+        },
+        value: options.childrenForm,
+        options: forms,
+      }) }}
+      {{ include("@bazar/inputs/text.twig",{
+        field:{
+          propertyName: "options[fieldName]",
+          name: "options[fieldName]",
+          type: "text",
+          subtype: "text",
+          label: _t('GRPMNGT_ACTION_FIELDNAME_LABEL'),
+        },
+        value: options.fieldName,
+      }) }}
+      {{ include("@bazar/inputs/text.twig",{
+        field:{
+          propertyName: "options[groupSuffix]",
+          name: "options[groupSuffix]",
+          type: "text",
+          subtype: "text",
+          required: true,
+          label: _t('GRPMNGT_ACTION_GROUPSUFFIX_LABEL'),
+          pattern: "....*",
+        },
+        value: options.groupSuffix is not empty ? options.groupSuffix : _t('GRPMNGT_ACTION_GROUPSUFFIX_DEFAULT'),
+      }) }}
+      {{ include("@bazar/inputs/checkbox.twig",{
+        field:{
+          propertyName: "options[allowedToWrite]",
+          type: "checkbox",
+          label: _t('GRPMNGT_ACTION_ALLOWEDTOWRITE_LABEL'),
+          hint: _t('GRPMNGT_ACTION_ALLOWEDTOWRITE_HINT'),
+          fromFormId: '[fromForm]',
+        },
+        values: options.allowedToWrite ? ['allowedToWrite'] : [],
+        options: {
+          allowedToWrite: _t('YES')
+        },
+      }) }}
     </form>
 
     <button class="btn btn-primary btn-xs" type="submit" form="groupmanagementOptions">{{ _t('SAVE') }}</button>

@@ -5,3 +5,19 @@ previewHeight: 200px
 actions:
   groupmanagement:
     label: _t(GRPMNGT_ACTION_TITLE)
+    properties:
+      title: 
+        label: _t(BAZ_TITLE)
+        type: text
+        default: _t(GRPMNGT_ACTION_TITLE)
+        required: true
+      selectentrylabel: 
+        label: _t(GRPMNGT_ACTION_SELECTENTRYLABEL_LABEL)
+        type: text
+        default: _t(GRPMNGT_ACTION_SELECTENTRY_DEFAULT)
+        required: true
+      noentrylabel: 
+        label: _t(GRPMNGT_ACTION_NOENTRY_LABEL)
+        type: text
+        default: _t(GRPMNGT_ACTION_NOENTRY_DEFAULT)
+        required: true
