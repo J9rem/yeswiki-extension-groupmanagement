@@ -2,9 +2,15 @@
 
 namespace YesWiki\Groupmanagement;
 
+use YesWiki\Bazar\Field\BazarField;
+use YesWiki\Bazar\Field\EnumField;
+use YesWiki\Bazar\Field\CheckboxEntryField;
+use YesWiki\Bazar\Field\RadioEntryField;
+use YesWiki\Bazar\Field\SelectEntryField;
 use YesWiki\Bazar\Service\EntryManager;
 use YesWiki\Bazar\Service\FormManager;
 use YesWiki\Core\YesWikiAction;
+use YesWiki\Core\Service\AclService;
 use YesWiki\Core\Service\TripleStore;
 use YesWiki\Core\Service\UserManager;
 
@@ -12,6 +18,7 @@ class GroupManagementAction extends YesWikiAction
 {
     public const TRIPLE_PROPERTY = "https://yeswiki.net/vocabulary/groupmanagementoptions";
 
+    protected $aclService;
     protected $entryManager;
     protected $formManager;
     protected $tripleStore;
@@ -19,7 +26,9 @@ class GroupManagementAction extends YesWikiAction
     private $groupsWithSuffix ;
     private $allEntries ;
     private $allEntriesIds ;
+    private $associatedField ;
     private $options;
+    private $allUsers;
 
     public function formatArguments($args)
     {
@@ -33,6 +42,7 @@ class GroupManagementAction extends YesWikiAction
     public function run()
     {
         // get Services
+        $this->aclService = $this->getService(AclService::class);
         $this->entryManager = $this->getService(EntryManager::class);
         $this->formManager = $this->getService(FormManager::class);
         $this->tripleStore = $this->getService(TripleStore::class);
@@ -41,6 +51,7 @@ class GroupManagementAction extends YesWikiAction
         $errorMsg = "";
 
         $this->options = [];
+        $this->allUsers = null;
         $optionsReady = $this->getOptions();
         $isAdmin = $this->wiki->UserIsAdmin();
 
@@ -61,14 +72,34 @@ class GroupManagementAction extends YesWikiAction
             if (!$isAdmin && $this->options['allowedToWrite']) {
                 $this->appendEntriesWhereAllowedToWrite($entriesWhereAdmin, $user);
             }
-            $selectedEntry = filter_input(INPUT_POST, 'selectedEntry', FILTER_SANITIZE_STRING);
-            if (!empty($selectedEntry)) {
-                if (!in_array($selectedEntry, $this->allEntriesIds)) {
-                    $errorMsg = _t('GRPMNGT_ACTION_WRONG_ENTRYID', ['selectedEntryId' => $selectedEntry]);
-                    $selectedEntry = "";
-                } else {
-                    $accountsInGroupForSelectedEntry = $this->getAccountsInGroupForSelectedEntry($selectedEntry);
-                    // TODO extract list of members linked to this entry (owners of the linked entries)
+            if (!empty($entriesWhereAdmin)) {
+                $selectedEntry = filter_input(INPUT_POST, 'selectedEntry', FILTER_SANITIZE_STRING);
+                if (count($entriesWhereAdmin) == 1) {
+                    $selectedEntry = $entriesWhereAdmin[0];
+                }
+                if (!empty($selectedEntry)) {
+                    if (!in_array($selectedEntry, $this->allEntriesIds)) {
+                        $errorMsg = _t('GRPMNGT_ACTION_WRONG_ENTRYID', ['selectedEntryId' => $selectedEntry]);
+                        $selectedEntry = "";
+                    } else {
+                        if (filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING) == "save" &&
+                            $selectedEntry == filter_input(INPUT_POST, 'previousSelectedEntry', FILTER_SANITIZE_STRING)
+                        ) {
+                            $this->saveGroup($selectedEntry);
+                        }
+                        $accountsWithEntriesLinkedToSelectedOneWithData = $this->getAccountsWithEntriesLinkedToSelectedEntry($selectedEntry);
+                        $accountsWithEntriesLinkedToSelectedOne = array_keys($accountsWithEntriesLinkedToSelectedOneWithData);
+                        $accountsInGroupForSelectedEntry = $this->getAccountsInGroupForSelectedEntry($selectedEntry);
+                        $dragNDropOptions = array_combine($accountsWithEntriesLinkedToSelectedOne, $accountsWithEntriesLinkedToSelectedOne);
+                        foreach ($accountsInGroupForSelectedEntry as $userName) {
+                            if (!in_array($userName, $accountsWithEntriesLinkedToSelectedOne)) {
+                                $dragNDropOptions[$userName] = $userName;
+                            }
+                        }
+                        if (!in_array($user['name'], $accountsInGroupForSelectedEntry)) {
+                            $dragNDropOptions[$user['name']] = $user['name'];
+                        }
+                    }
                 }
             }
         }
@@ -84,6 +115,9 @@ class GroupManagementAction extends YesWikiAction
                 return $entry['bf_titre'] ?? $entryId;
             }, array_combine($entriesWhereAdmin, $entriesWhereAdmin)) : [],
             'selectedEntry' => $selectedEntry ?? "",
+            'dragNDropOptions' => $dragNDropOptions ?? [],
+            'dragNDropOptionsData' => $accountsWithEntriesLinkedToSelectedOneWithData ?? [],
+            'selectedOptions' => $accountsInGroupForSelectedEntry ?? [],
         ]);
     }
 
@@ -120,11 +154,14 @@ class GroupManagementAction extends YesWikiAction
         }
         $this->options = $options;
 
+        $this->associatedField = $this->findAssociatedField($this->options['fieldName'] ?? "");
+
         return !empty($this->options['parentsForm']) &&
             !empty($this->options['childrenForm']) &&
             !empty($this->options['groupSuffix']) &&
             strlen($this->options['groupSuffix']) > 3 &&
-            isset($this->options['allowedToWrite']);
+            isset($this->options['allowedToWrite']) &&
+            !empty($this->associatedField) ;
     }
 
     private function setOptions(): bool
@@ -151,6 +188,9 @@ class GroupManagementAction extends YesWikiAction
             'groupSuffix' => FILTER_SANITIZE_STRING,
             'allowedToWrite' => FILTER_VALIDATE_BOOL,
         ]);
+        $field = $this->findAssociatedField(!empty($options['fieldName']) ? $options['fieldName'] : "");
+        $options['fieldName'] = empty($field) ? "" : (!empty($field->getName()) ? $field->getName() : $field->getPropertyName());
+
         $previousItems = $this->tripleStore->getAll($tag, self::TRIPLE_PROPERTY, "", "");
         if (!empty($previousItems)) {
             for ($i=1; $i < count($previousItems); $i++) {
@@ -215,12 +255,40 @@ class GroupManagementAction extends YesWikiAction
         }
     }
 
+    private function getAccountsWithEntriesLinkedToSelectedEntry(string $selectedEntry): array
+    {
+        $entries = $this->entryManager->search(
+            [
+                'formsIds' => [$this->options['childrenForm']],
+                'queries' => [
+                    $this->associatedField->getPropertyName() => $selectedEntry
+                ],
+            ],
+            true,
+            true
+        );
+        $accounts = [];
+        
+        $users = $this->getAllUsers();
+
+        foreach ($entries as $entry) {
+            if (isset($entry['owner'])) {
+                $owner = trim($entry['owner']);
+                if (!empty($owner) && in_array($owner, $users) && !isset($accounts[$owner])) {
+                    $accounts[$owner] = [
+                        'id' => $entry['id_fiche'],
+                        'title' => $entry['bf_titre'] ?? $entry['id_fiche'],
+                    ];
+                }
+            }
+        }
+        return $accounts;
+    }
+
     private function getAccountsInGroupForSelectedEntry(string $selectedEntry): array
     {
         $groupAcl = $this->wiki->GetGroupACL("{$selectedEntry}{$this->options['groupSuffix']}");
-        $users = array_map(function ($user) {
-            return $user['name'];
-        }, $this->userManager->getAll(['name']));
+        $users = $this->getAllUsers();
         
         $groupmembers = array_filter(array_map('trim', explode("\n", $groupAcl)), function ($line) use ($users) {
             switch ($line) {
@@ -239,22 +307,109 @@ class GroupManagementAction extends YesWikiAction
             }
         });
 
-        $groupmembers = array_map(function ($userName) {
-            $entries = $this->entryManager->search(
-                [
-                    'formsIds' => [$this->options['childrenForm']],
-                    'user' => $userName,
-                    // TODO select query based on fieldName
-                ],
-                true,
-                true
-            );
-            return [
-                'name' => $userName,
-                'hasEntry' => !empty($entries)
-            ];
-        }, array_values($groupmembers));
+        return array_values($groupmembers);
+    }
 
-        return $groupmembers;
+    private function saveGroup(string $selectedEntry)
+    {
+        $newData = $_POST['membersofgroup'] ?? null;
+        if (!is_array($newData)) {
+            flash(_t('GRPMNGT_ACTION_VALUES_NOT_SAVED'), "danger");
+        } else {
+            $selectedUsers = [];
+            $users = $this->getAllUsers();
+            foreach ($newData as $key => $value) {
+                if ($key != 'fromForm' && in_array($key, $users) && in_array($value, [1,"1",true,"true"])) {
+                    $selectedUsers[] = $key;
+                }
+            }
+            $groupName = "{$selectedEntry}{$this->options['groupSuffix']}";
+            $groupAcl = $this->wiki->GetGroupACL($groupName);
+            if (empty($groupAcl)) {
+                $groupAcl = "";
+            }
+            $accountsCurrentlyInGroup = $this->getAccountsInGroupForSelectedEntry($selectedEntry);
+            foreach ($selectedUsers as $userName) {
+                if (!in_array($userName, $accountsCurrentlyInGroup)) {
+                    if (!empty($groupAcl) && substr($groupAcl, -strlen("\n")) != "\n") {
+                        $groupAcl .= "\n";
+                    }
+                    $groupAcl .= "$userName\n";
+                }
+            }
+            foreach ($accountsCurrentlyInGroup as $userName) {
+                if (!in_array($userName, $selectedUsers)) {
+                    $groupAcl = preg_replace("/(?<=^|\\r|\\n)$userName(?:\\r|\\n)+/", "", $groupAcl);
+                }
+            }
+            if (empty(trim($groupAcl))) {
+                $groupAcl = "@admins\n";
+            } else {
+                $groupAcl = str_replace(["\r\r","\n\n"], ["\r","\n"], $groupAcl);
+            }
+            $this->wiki->SetGroupACL($groupName, $groupAcl);
+            $currentWrite = $this->aclService->load($selectedEntry, 'write', false);
+            $currentWrite = empty($currentWrite['list']) ? "" : $currentWrite['list'];
+            $isAlreadyDefined = preg_match("/^@$groupName$/m", $currentWrite);
+            if ($this->options['allowedToWrite'] && !$isAlreadyDefined) {
+                $newCurrentWrite = $currentWrite .((substr($currentWrite, -strlen("\n")) != "\n") ? "\n" : "") . "@$groupName\n";
+            } elseif (!$this->options['allowedToWrite'] && $isAlreadyDefined) {
+                $newCurrentWrite = (trim($currentWrite) == "@$groupName")
+                    ? "@admins\n"
+                    : preg_replace("/(?<=^|\\r|\\n)@$groupName(?:\\r|\\n)+/", "", $currentWrite);
+            }
+            if (isset($newCurrentWrite)) {
+                $this->aclService->save($selectedEntry, 'write', $newCurrentWrite);
+            }
+            $currentRead = $this->aclService->load($selectedEntry, 'read', false);
+            $currentRead = empty($currentRead['list']) ? "" : $currentRead['list'];
+            $isAlreadyDefined = preg_match("/^@$groupName$/m", $currentRead);
+            if (!$isAlreadyDefined) {
+                $currentRead .= ((substr($currentRead, -strlen("\n")) != "\n") ? "\n" : "") . "@$groupName\n";
+                $this->aclService->save($selectedEntry, 'read', $currentRead);
+            }
+            flash(_t('GRPMNGT_ACTION_VALUES_SAVED'), "success");
+        }
+    }
+
+    private function findAssociatedField(string $fieldName = ""): ?EnumField
+    {
+        if (empty($this->options['childrenForm'])) {
+            return null;
+        }
+        if (!empty($fieldName)) {
+            $field = $this->formManager->findFieldFromNameOrPropertyName($fieldName, $this->options['childrenForm']);
+        }
+        if (empty($field) || !$this->isRightField($field)) {
+            $form = $this->formManager->getOne($this->options['childrenForm']);
+            if (empty($form)) {
+                return null;
+            } else {
+                foreach ($form['prepared'] as $field) {
+                    if ($this->isRightField($field)) {
+                        return $field;
+                    }
+                }
+                return null;
+            }
+        }
+
+        return $field;
+    }
+
+    private function isRightField(BazarField $field): bool
+    {
+        return ($field instanceof SelectEntryField || $field instanceof RadioEntryField || $field instanceof CheckboxEntryField) &&
+            $field->getLinkedObjectName() == $this->options['parentsForm'];
+    }
+
+    private function getAllUsers(): array
+    {
+        if (is_null($this->allUsers)) {
+            $this->allUsers = array_map(function ($user) {
+                return $user['name'];
+            }, $this->userManager->getAll(['name']));
+        }
+        return $this->allUsers;
     }
 }

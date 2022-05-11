@@ -6,6 +6,7 @@ return [
     // tools/groupmanagement/actions/GroupManagementAction.php
     'GRPMNGT_ACTION_NO_USER' => 'L\'action \'{{groupmanagement}}\' est réservée aux personnes connectées.',
     'GRPMNGT_ACTION_NO_OPTIONS' => 'Les options de l\'action \'{{groupmanagement}}\' ne sont pas correctement paramétrées.',
+    'GRPMNGT_ACTION_VALUES_SAVED' => 'Valeurs sauvegardées',
 
     // tools/groupmanagement/fields/AutoRegisterLinkedEntryAtCreationField.php
 
@@ -41,4 +42,7 @@ return [
     'GRPMNGT_ACTION_ALLOWEDTOWRITE_LABEL' => 'Le groupe est autorisé à modifier la fiche mère',
     'GRPMNGT_ACTION_ALLOWEDTOWRITE_HINT' => 'droits d\'écriture de la fiche',
     'GRPMNGT_ACTION_WRONG_ENTRYID' => 'La fiche sélectionnée (\'%{selectedEntryId}\') n\'a pas été trouvée !',
+    'GRPMNGT_ACTION_SELECTMEMBERS_LABEL' => 'Sélection des membres du groupe',
+    'GRPMNGT_ACTION_DRAGNDROP_TITLE' => 'sélection des membres du groupe',
+    'GRPMNGT_ACTION_NO_ENTRY_FOR_THIS_USER' => 'Il n\'y a pas de fiche associée pour cet utilisateur !',
 ];

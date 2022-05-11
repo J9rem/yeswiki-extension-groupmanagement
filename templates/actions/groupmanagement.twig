@@ -11,7 +11,7 @@
   {% if errorMsg %}
     {{ include("@templates/alert-message.twig",{type:"danger",message:errorMsg}) }}
   {% elseif entriesWhereAdmin is not empty %}
-    <form action="" method="post" class="form-horizontal">
+    <form action="" method="post" class="form-horizontal" id="groupManagementEntrySelect">
       {{ include("@bazar/inputs/select.twig",{
         field:{
           propertyName: "selectedEntry",
@@ -22,10 +22,23 @@
         value: selectedEntry,
         options: entriesWhereAdmin,
       }) }}
-      {# TODO manage autorefresh when selecting entry #}
       {% if selectedEntry is not empty %}
-        {# TODO checkbox drag n drop #}
+        {{ include("@groupmanagement/actions/groupmanagement_drag_n_drop.twig",{
+          field:{
+            propertyName: "membersofgroup",
+            type: "checkbox",
+            label: _t('GRPMNGT_ACTION_SELECTMEMBERS_LABEL'),
+            fromFormId: '[fromForm]',
+          },
+          selectedOptionsId: selectedOptions ?? [],
+          options: dragNDropOptions ?? [],
+          optionsData : dragNDropOptionsData ?? [],
+          oldValue: selectedOptions|join(','),
+          name: _t('GRPMNGT_ACTION_DRAGNDROP_TITLE'),
+        }) }}
       {% endif %}
+      <input type="hidden" name="previousSelectedEntry" value="{{ selectedEntry }}">
+      <input type="hidden" value="save" name="action">
       <button type="submit" class="btn btn-primary" title="{{ _t('SAVE') }}">{{ _t('SAVE') }}</button>
     </form>
   {% else %}
@@ -35,3 +48,5 @@
     }) }}
   {% endif %}
 </div>
+
+{{ include_javascript('tools/groupmanagement/javascripts/groupmanagement.js') }}
