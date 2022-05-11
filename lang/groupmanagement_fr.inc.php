@@ -11,6 +11,8 @@
 
 return [
 
+    // docs/actions/bazarliste.yaml
+    'GRPMNGT_BAZARLISTE_PARAM_LABEL' => 'Afficher uniquement les fiches que l\'utilisateur peut modifier',
     
     // tools/groupmanagement/actions/GroupManagementAction.php
     'GRPMNGT_ACTION_NO_USER' => 'L\'action \'{{groupmanagement}}\' est réservée aux personnes connectées.',
