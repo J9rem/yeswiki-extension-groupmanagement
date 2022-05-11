@@ -1,0 +1,25 @@
+<?php
+
+use YesWiki\Core\Service\AssetsManager;
+
+if (isset($data) &&
+    isset($data['action_groups']) &&
+    isset($data['action_groups']['bazarliste']) &&
+    isset($data['action_groups']['bazarliste']['actions']) &&
+    isset($data['action_groups']['bazarliste']['actions']['commons']) &&
+    isset($data['action_groups']['bazarliste']['actions']['commons']['properties'])){
+    $data['action_groups']['bazarliste']['actions']['commons']['properties']['keeponlyentrieswherecanedit'] = [
+        'label' => _t('GRPMNGT_BAZARLISTE_PARAM_LABEL'),
+        'type' => "checkbox",
+        'default' => "\"false\"",
+        'advanced' => true
+    ];
+}
+
+$paths = $this->twigLoader->getPaths("aceditor");
+
+// render next following custom actions-builder.tpl.html
+$curPos = array_search('tools/groupmanagement/templates/aceditor',$paths);
+if ($curPos !== false and $curPos < count($paths)){
+    echo $this->render("{$paths[$surPos+1]}/actions-builder.tpl.html",compact(['data']));
+}
