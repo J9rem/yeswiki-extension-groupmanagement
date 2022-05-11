@@ -47,6 +47,18 @@ file that was distributed with this source code. #}
       {% endif %}
       <input type="hidden" name="previousSelectedEntry" value="{{ selectedEntry }}">
       <input type="hidden" value="save" name="action">
+      {% if selectedEntry is not empty %}
+        <div>
+          <a href="{{ url({tag:selectedEntry})}}" 
+              class="btn btn-secondary-2 btn-xs modalbox pull-right" 
+              data-size="modal-lg"
+              title="{{ _t('BAZ_SEE_ENTRY') }}"
+              data-toggle="tooltip"
+              data-placement="left">
+            <i class="fa fa-eye"></i>&nbsp;{{ selectedEntry }}
+          </a>
+        </div>
+      {% endif %}
       <button type="submit" class="btn btn-primary" title="{{ _t('SAVE') }}">{{ _t('SAVE') }}</button>
     </form>
   {% else %}

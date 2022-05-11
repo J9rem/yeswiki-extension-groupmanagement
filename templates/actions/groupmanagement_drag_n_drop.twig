@@ -13,7 +13,9 @@ file that was distributed with this source code. #}
     <a class="btn btn-default btn-xs view-page-item modalbox" 
         data-size="modal-lg" 
         title="{{ _t('BAZ_DRAG_n_DROP_CHECKBOX_SEE_ITEM') ~ " " ~ optionsData[item_id].title|striptags }}" 
-        href="{{ url({tag:optionsData[item_id].id}) }}">
+        href="{{ url({tag:optionsData[item_id].id}) }}"
+        data-toggle="tooltip"
+        data-placement="right">
       <i class="fas fa-eye"></i>
     </a>
   {% else %}
