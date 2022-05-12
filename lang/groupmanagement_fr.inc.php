@@ -56,4 +56,6 @@ return [
     'GRPMNGT_ACTION_SELECTMEMBERS_LABEL' => 'Sélection des membres du groupe',
     'GRPMNGT_ACTION_DRAGNDROP_TITLE' => 'sélection des membres du groupe',
     'GRPMNGT_ACTION_NO_ENTRY_FOR_THIS_USER' => 'Il n\'y a pas de fiche associée pour cet utilisateur !',
+    'GRPMNGT_ACTION_MAINGROUP_LABEL' => 'Groupe principal où ajouter le groupe courant :',
+    'GRPMNGT_ACTION_MAINGROUP_HINT' => 'Laisser vide pour ne pas ajouter dans un groupe principal',
 ];

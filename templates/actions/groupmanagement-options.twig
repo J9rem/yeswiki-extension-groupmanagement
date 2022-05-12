@@ -76,6 +76,19 @@ file that was distributed with this source code. #}
           allowedToWrite: _t('YES')
         },
       }) }}
+      {{ include("@bazar/inputs/text.twig",{
+        field:{
+          propertyName: "options[mainGroup]",
+          name: "options[mainGroup]",
+          type: "text",
+          subtype: "text",
+          required: false,
+          label: _t('GRPMNGT_ACTION_MAINGROUP_LABEL'),
+          hint: _t('GRPMNGT_ACTION_MAINGROUP_HINT'),
+          pattern: "....*",
+        },
+        value: options.mainGroup is not empty ? options.mainGroup : "",
+      }) }}
     </form>
 
     <button class="btn btn-primary btn-xs" type="submit" form="groupmanagementOptions">{{ _t('SAVE') }}</button>

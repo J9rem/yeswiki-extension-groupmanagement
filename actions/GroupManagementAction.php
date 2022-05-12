@@ -196,6 +196,7 @@ class GroupManagementAction extends YesWikiAction
             'fieldName' => FILTER_SANITIZE_STRING,
             'groupSuffix' => FILTER_SANITIZE_STRING,
             'allowedToWrite' => FILTER_VALIDATE_BOOL,
+            'mainGroup' => FILTER_SANITIZE_STRING,
         ]);
         $field = $this->findAssociatedField(!empty($options['fieldName']) ? $options['fieldName'] : "");
         $options['fieldName'] = empty($field) ? "" : (!empty($field->getName()) ? $field->getName() : $field->getPropertyName());
@@ -325,59 +326,91 @@ class GroupManagementAction extends YesWikiAction
         if (!is_array($newData)) {
             flash(_t('GRPMNGT_ACTION_VALUES_NOT_SAVED'), "danger");
         } else {
-            $selectedUsers = [];
-            $users = $this->getAllUsers();
-            foreach ($newData as $key => $value) {
-                if ($key != 'fromForm' && in_array($key, $users) && in_array($value, [1,"1",true,"true"])) {
-                    $selectedUsers[] = $key;
-                }
-            }
             $groupName = "{$selectedEntry}{$this->options['groupSuffix']}";
-            $groupAcl = $this->wiki->GetGroupACL($groupName);
-            if (empty($groupAcl)) {
-                $groupAcl = "";
-            }
-            $accountsCurrentlyInGroup = $this->getAccountsInGroupForSelectedEntry($selectedEntry);
-            foreach ($selectedUsers as $userName) {
-                if (!in_array($userName, $accountsCurrentlyInGroup)) {
-                    if (!empty($groupAcl) && substr($groupAcl, -strlen("\n")) != "\n") {
-                        $groupAcl .= "\n";
-                    }
-                    $groupAcl .= "$userName\n";
-                }
-            }
-            foreach ($accountsCurrentlyInGroup as $userName) {
-                if (!in_array($userName, $selectedUsers)) {
-                    $groupAcl = preg_replace("/(?<=^|\\r|\\n)$userName(?:\\r|\\n)+/", "", $groupAcl);
-                }
-            }
-            if (empty(trim($groupAcl))) {
-                $groupAcl = "@admins\n";
-            } else {
-                $groupAcl = str_replace(["\r\r","\n\n"], ["\r","\n"], $groupAcl);
-            }
-            $this->wiki->SetGroupACL($groupName, $groupAcl);
-            $currentWrite = $this->aclService->load($selectedEntry, 'write', false);
-            $currentWrite = empty($currentWrite['list']) ? "" : $currentWrite['list'];
-            $isAlreadyDefined = preg_match("/^@$groupName$/m", $currentWrite);
-            if ($this->options['allowedToWrite'] && !$isAlreadyDefined) {
-                $newCurrentWrite = $currentWrite .((substr($currentWrite, -strlen("\n")) != "\n") ? "\n" : "") . "@$groupName\n";
-            } elseif (!$this->options['allowedToWrite'] && $isAlreadyDefined) {
-                $newCurrentWrite = (trim($currentWrite) == "@$groupName")
-                    ? "@admins\n"
-                    : preg_replace("/(?<=^|\\r|\\n)@$groupName(?:\\r|\\n)+/", "", $currentWrite);
-            }
-            if (isset($newCurrentWrite)) {
-                $this->aclService->save($selectedEntry, 'write', $newCurrentWrite);
-            }
-            $currentRead = $this->aclService->load($selectedEntry, 'read', false);
-            $currentRead = empty($currentRead['list']) ? "" : $currentRead['list'];
-            $isAlreadyDefined = preg_match("/^@$groupName$/m", $currentRead);
-            if (!$isAlreadyDefined) {
-                $currentRead .= ((substr($currentRead, -strlen("\n")) != "\n") ? "\n" : "") . "@$groupName\n";
-                $this->aclService->save($selectedEntry, 'read', $currentRead);
-            }
+            $this->updateGroupAcl($selectedEntry, $groupName, $newData);
+            $this->addGroupToMainGroup( $groupName);
+            $this->updateWriteAcl($selectedEntry, $groupName);
+            $this->updateReadAcl($selectedEntry, $groupName);
+            
             flash(_t('GRPMNGT_ACTION_VALUES_SAVED'), "success");
+        }
+    }
+
+    private function updateGroupAcl(string $selectedEntry, string $groupName, array $newData)
+    {
+        $selectedUsers = [];
+        $users = $this->getAllUsers();
+        foreach ($newData as $key => $value) {
+            if ($key != 'fromForm' && in_array($key, $users) && in_array($value, [1,"1",true,"true"])) {
+                $selectedUsers[] = $key;
+            }
+        }
+        $groupAcl = $this->wiki->GetGroupACL($groupName);
+        if (empty($groupAcl)) {
+            $groupAcl = "";
+        }
+        $accountsCurrentlyInGroup = $this->getAccountsInGroupForSelectedEntry($selectedEntry);
+        foreach ($selectedUsers as $userName) {
+            if (!in_array($userName, $accountsCurrentlyInGroup)) {
+                if (!empty($groupAcl) && substr($groupAcl, -strlen("\n")) != "\n") {
+                    $groupAcl .= "\n";
+                }
+                $groupAcl .= "$userName\n";
+            }
+        }
+        foreach ($accountsCurrentlyInGroup as $userName) {
+            if (!in_array($userName, $selectedUsers)) {
+                $groupAcl = preg_replace("/(?<=^|\\r|\\n)$userName(?:\\r|\\n)+/", "", $groupAcl);
+            }
+        }
+        if (empty(trim($groupAcl))) {
+            $groupAcl = "@admins\n";
+        } else {
+            $groupAcl = str_replace(["\r\r","\n\n"], ["\r","\n"], $groupAcl);
+        }
+        $this->wiki->SetGroupACL($groupName, $groupAcl);
+    }
+
+    private function addGroupToMainGroup(string $groupName)
+    {
+        if (!empty($this->options['mainGroup'])){
+            $mainGroupAcl = $this->wiki->GetGroupACL($this->options['mainGroup']);
+            if (empty($mainGroupAcl)) {
+                $mainGroupAcl = "";
+            }
+            $isAlreadyDefined = preg_match("/^@$groupName$/m", $mainGroupAcl);
+            if (!$isAlreadyDefined) {
+                $mainGroupAcl .= ((substr($mainGroupAcl, -strlen("\n")) != "\n") ? "\n" : "") . "@$groupName\n";
+                $this->wiki->SetGroupACL($this->options['mainGroup'], $mainGroupAcl);
+            }
+        }
+    }
+    
+    private function updateWriteAcl(string $selectedEntry, string $groupName)
+    {
+        $currentWrite = $this->aclService->load($selectedEntry, 'write', false);
+        $currentWrite = empty($currentWrite['list']) ? "" : $currentWrite['list'];
+        $isAlreadyDefined = preg_match("/^@$groupName$/m", $currentWrite);
+        if ($this->options['allowedToWrite'] && !$isAlreadyDefined) {
+            $newCurrentWrite = $currentWrite .((substr($currentWrite, -strlen("\n")) != "\n") ? "\n" : "") . "@$groupName\n";
+        } elseif (!$this->options['allowedToWrite'] && $isAlreadyDefined) {
+            $newCurrentWrite = (trim($currentWrite) == "@$groupName")
+                ? "@admins\n"
+                : preg_replace("/(?<=^|\\r|\\n)@$groupName(?:\\r|\\n)+/", "", $currentWrite);
+        }
+        if (isset($newCurrentWrite)) {
+            $this->aclService->save($selectedEntry, 'write', $newCurrentWrite);
+        }
+    }
+
+    private function updateReadAcl(string $selectedEntry, string $groupName)
+    {
+        $currentRead = $this->aclService->load($selectedEntry, 'read', false);
+        $currentRead = empty($currentRead['list']) ? "" : $currentRead['list'];
+        $isAlreadyDefined = preg_match("/^@$groupName$/m", $currentRead);
+        if (!$isAlreadyDefined) {
+            $currentRead .= ((substr($currentRead, -strlen("\n")) != "\n") ? "\n" : "") . "@$groupName\n";
+            $this->aclService->save($selectedEntry, 'read', $currentRead);
         }
     }
 
