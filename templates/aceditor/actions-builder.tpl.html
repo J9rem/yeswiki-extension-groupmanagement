@@ -20,6 +20,11 @@ $paths = $this->twigLoader->getPaths("aceditor");
 
 // render next following custom actions-builder.tpl.html
 $curPos = array_search('tools/groupmanagement/templates/aceditor',$paths);
-if ($curPos !== false and $curPos < count($paths)){
-    echo $this->render("{$paths[$surPos+1]}/actions-builder.tpl.html",compact(['data']));
+if ($curPos !== false) {
+    for ($i=($curPos+1); $i < count($paths); $i++) { 
+        if ($this->hasTemplate("{$paths[$i]}/actions-builder.tpl.html")){
+            echo $this->render("{$paths[$i]}/actions-builder.tpl.html",compact(['data']));
+            break;
+        }
+    }
 }
