@@ -9,7 +9,7 @@ file that was distributed with this source code. #}
 {% extends "@bazar/inputs/checkbox_drag_and_drop.twig" %}
 
 {% block link_for_entry %}
-  {% if optionsData[item_id] %}
+  {% if optionsData[item_id].id %}
     <a class="btn btn-default btn-xs view-page-item modalbox" 
         data-size="modal-lg" 
         title="{{ _t('BAZ_DRAG_n_DROP_CHECKBOX_SEE_ITEM') ~ " " ~ optionsData[item_id].title|striptags }}" 
@@ -20,6 +20,11 @@ file that was distributed with this source code. #}
     </a>
   {% else %}
     <button class="btn btn-warning btn-xs" data-toggle="tooltip" data-placement="right" title="{{ _t('GRPMNGT_ACTION_NO_ENTRY_FOR_THIS_USER') }}"><i class="fas fa-exclamation-triangle"></i></button>
+  {% endif %}
+  {% if optionsData[item_id].isOwner %}
+    <button class="btn btn-primary btn-xs" data-toggle="tooltip" data-placement="right" title="{{ _t('GRPMNGT_ACTION_USER_IS_OWNER') }}"><i class="fas fa-info-circle"></i></button>
+  {% elseif optionsData[item_id].isAdmin %}
+    <button class="btn btn-primary btn-xs" data-toggle="tooltip" data-placement="right" title="{{ _t('GRPMNGT_ACTION_USER_IS_ADMIN') }}"><i class="fas fa-info-circle"></i></button>
   {% endif %}
   &nbsp;
 {% endblock %}

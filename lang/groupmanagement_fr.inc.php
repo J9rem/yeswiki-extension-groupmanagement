@@ -50,12 +50,21 @@ return [
     'GRPMNGT_ACTION_FIELDNAME_LABEL' => 'Champ associé (facultatif)',
     'GRPMNGT_ACTION_GROUPSUFFIX_LABEL' => 'Suffix du groupe d\'utilisateurs',
     'GRPMNGT_ACTION_GROUPSUFFIX_DEFAULT' => 'Admins',
-    'GRPMNGT_ACTION_ALLOWEDTOWRITE_LABEL' => 'Le groupe est autorisé à modifier la fiche mère',
-    'GRPMNGT_ACTION_ALLOWEDTOWRITE_HINT' => 'droits d\'écriture de la fiche',
+    'GRPMNGT_ACTION_ALLOWEDTOWRITE_LABEL' => 'Cocher pour que les membres du groupe puissent modifier la fiche structure',
+    'GRPMNGT_ACTION_ALLOWEDTOWRITE_HINT' => 'Concerne les droits d\'écriture de la fiche',
     'GRPMNGT_ACTION_WRONG_ENTRYID' => 'La fiche sélectionnée (\'%{selectedEntryId}\') n\'a pas été trouvée !',
     'GRPMNGT_ACTION_SELECTMEMBERS_LABEL' => 'Sélection des membres du groupe',
     'GRPMNGT_ACTION_DRAGNDROP_TITLE' => 'sélection des membres du groupe',
     'GRPMNGT_ACTION_NO_ENTRY_FOR_THIS_USER' => 'Il n\'y a pas de fiche associée pour cet utilisateur !',
     'GRPMNGT_ACTION_MAINGROUP_LABEL' => 'Groupe principal où ajouter le groupe courant :',
     'GRPMNGT_ACTION_MAINGROUP_HINT' => 'Laisser vide pour ne pas ajouter dans un groupe principal',
+    'GRPMNGT_ACTION_ALLOWEDTOWRITE' => 'Attention les membres du groupe placés à droite auront les droits d\'écriture sur la fiche mère',
+    'GRPMNGT_ACTION_NOTALLOWEDTOWRITE' => 'Les membres du groupe placés à droite n\'auront pas forcément les droits d\'écriture sur la fiche mère, ils seront juste regroupés dans un groupe dédié pour faciliter l\'accès à des zones restreintes.',
+    'GRPMNGT_ACTION_USER_IS_OWNER' => 'Ce compte est propriétaire de la fiche mère',
+    'GRPMNGT_ACTION_USER_IS_ADMIN' => 'Ce compte est administrateur du site',
+    'GRPMNGT_ACTION_HELP' => "%Aide :\n".
+        "Déplacer à droite le nom des comptes qui seront membres du groupe (mettre à gauche les comptes à retirer du groupe).\n".
+        "%Administrateur du site : ils peuvent toujours éditer les fiches, qu'ils soient dans le groupe ou pas (à droite ou à gauche).\n".
+        "%Propriétaire de la fiche : ils peuvent toujours éditer les fiches, qu'ils soient dans le groupe ou pas (à droite ou à gauche).\n".
+        "Il est conseillé de les ajouter à droite (dans le groupe) pour qu'ils gardent les droits d'administration de la fiche même si le propriétaire de la fiche change.\n",
 ];

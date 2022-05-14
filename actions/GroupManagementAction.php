@@ -77,7 +77,8 @@ class GroupManagementAction extends YesWikiAction
             $this->getGroupsWithSuffix();
             $this->allEntries = $this->getAllEntries();
             $this->allEntriesIds = $this->getEntriesIds($this->allEntries);
-            $entriesWhereAdmin = $isAdmin ? $this->allEntriesIds : $this->getEntriesWhereOwner($user);
+            $entriesWhereOwner = $this->getEntriesWhereOwner($user);
+            $entriesWhereAdmin = $isAdmin ? $this->allEntriesIds : $entriesWhereOwner;
             if (!$isAdmin && $this->options['allowedToWrite']) {
                 $this->appendEntriesWhereAllowedToWrite($entriesWhereAdmin, $user);
             }
@@ -108,6 +109,18 @@ class GroupManagementAction extends YesWikiAction
                         if (!in_array($user['name'], $accountsInGroupForSelectedEntry)) {
                             $dragNDropOptions[$user['name']] = $user['name'];
                         }
+                        if ($isAdmin) {
+                            $currentEntry = array_filter($this->allEntries, function ($entry) use ($selectedEntry) {
+                                return $entry['id_fiche'] == $selectedEntry;
+                            });
+                            $currentEntry = $currentEntry[array_key_first($currentEntry)];
+                            if (!empty($currentEntry['owner']) && in_array($currentEntry['owner'], $this->getAllUsers()) && !in_array($currentEntry['owner'], $dragNDropOptions)) {
+                                $dragNDropOptions[$currentEntry['owner']] = $currentEntry['owner'];
+                                $accountsWithEntriesLinkedToSelectedOneWithData[$currentEntry['owner']] = ['isOwner' => true];
+                            }
+                        }
+                        $accountsWithEntriesLinkedToSelectedOneWithData[$user['name']]['isOwner'] = in_array($selectedEntry, $entriesWhereOwner);
+                        $accountsWithEntriesLinkedToSelectedOneWithData[$user['name']]['isAdmin'] = $isAdmin;
                     }
                 }
             }
@@ -127,6 +140,7 @@ class GroupManagementAction extends YesWikiAction
             'dragNDropOptions' => $dragNDropOptions ?? [],
             'dragNDropOptionsData' => $accountsWithEntriesLinkedToSelectedOneWithData ?? [],
             'selectedOptions' => $accountsInGroupForSelectedEntry ?? [],
+            'allowedToWrite' => $this->options['allowedToWrite'] ?? false,
         ]);
     }
 
@@ -328,7 +342,7 @@ class GroupManagementAction extends YesWikiAction
         } else {
             $groupName = "{$selectedEntry}{$this->options['groupSuffix']}";
             $this->updateGroupAcl($selectedEntry, $groupName, $newData);
-            $this->addGroupToMainGroup( $groupName);
+            $this->addGroupToMainGroup($groupName);
             $this->updateWriteAcl($selectedEntry, $groupName);
             $this->updateReadAcl($selectedEntry, $groupName);
             
@@ -373,7 +387,7 @@ class GroupManagementAction extends YesWikiAction
 
     private function addGroupToMainGroup(string $groupName)
     {
-        if (!empty($this->options['mainGroup'])){
+        if (!empty($this->options['mainGroup'])) {
             $mainGroupAcl = $this->wiki->GetGroupACL($this->options['mainGroup']);
             if (empty($mainGroupAcl)) {
                 $mainGroupAcl = "";

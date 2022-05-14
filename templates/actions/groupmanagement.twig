@@ -19,6 +19,13 @@ file that was distributed with this source code. #}
   {% if errorMsg %}
     {{ include("@templates/alert-message.twig",{type:"danger",message:errorMsg}) }}
   {% elseif entriesWhereAdmin is not empty %}
+    {% if selectedEntry %}
+      {% if allowedToWrite %}
+        {{ include("@templates/alert-message.twig",{type:"warning",message:_t('GRPMNGT_ACTION_ALLOWEDTOWRITE')}) }}
+      {% else %}
+        {{ include("@templates/alert-message.twig",{type:"info",message:_t('GRPMNGT_ACTION_NOTALLOWEDTOWRITE')}) }}
+      {% endif %}
+    {% endif %}
     <form action="" method="post" class="form-horizontal" id="groupManagementEntrySelect">
       {{ include("@bazar/inputs/select.twig",{
         field:{
@@ -61,6 +68,15 @@ file that was distributed with this source code. #}
       {% endif %}
       <button type="submit" class="btn btn-primary" title="{{ _t('SAVE') }}">{{ _t('SAVE') }}</button>
     </form>
+    {% if selectedEntry %}
+      {% if allowedToWrite %}
+        {{ include("@templates/alert-message.twig",{type:"warning",message:_t('GRPMNGT_ACTION_ALLOWEDTOWRITE')}) }}
+      {% else %}
+        {{ include("@templates/alert-message.twig",{type:"info",message:_t('GRPMNGT_ACTION_NOTALLOWEDTOWRITE')}) }}
+      {% endif %}
+    {% endif %}
+      {{ include("@templates/alert-message.twig",{type:"info",message:_t('GRPMNGT_ACTION_HELP')|replace({"%":"<b>"," :":"</b> :"})|raw|nl2br}) }}
+    </div>
   {% else %}
     {{ include("@templates/alert-message.twig",{
       type: "info",
