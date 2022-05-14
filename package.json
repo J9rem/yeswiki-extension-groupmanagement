@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "alpinejs": "^3.10.2"
+  },
+  "scripts": {
+    "postinstall": "./javascripts/vendor/extract-files-from-node-modules.sh"
+  }
+}
