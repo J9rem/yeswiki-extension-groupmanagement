@@ -47,7 +47,7 @@ return [
     'GRPMNGT_ACTION_SELECTENTRY_DEFAULT' => 'Choisir une structure',
     'GRPMNGT_ACTION_NOENTRY_LABEL' => 'Texte pour indiquer qu\'aucune fiche n\'a été trouvée :',
     'GRPMNGT_ACTION_NOENTRY_DEFAULT' => 'Vous n\'êtes administrateur d\'aucune structure !',
-    'GRPMNGT_ACTION_FIELDNAME_LABEL' => 'Champ associé (facultatif)',
+    'GRPMNGT_ACTION_FIELDNAME_LABEL' => 'Champs associés',
     'GRPMNGT_ACTION_GROUPSUFFIX_LABEL' => 'Suffix du groupe d\'utilisateurs',
     'GRPMNGT_ACTION_GROUPSUFFIX_DEFAULT' => 'Admins',
     'GRPMNGT_ACTION_ALLOWEDTOWRITE_LABEL' => 'Cocher pour que les membres du groupe puissent modifier la fiche structure',

@@ -8,7 +8,7 @@ file that was distributed with this source code. #}
 
 <div class="well">
   <h2>{{ title }}</h2>
-  <div class="well">
+  <div class="well" x-data="optionsData" x-init="parentsForms = {{ parentsForms|json_encode }};childrenForms = {{ childrenForms|json_encode }};">
     <h3>{{ _t('GRPMNGT_ACTION_MANAGE_OPTIONS_TITLE') }}</h3>
     {% if saved != "not-needed" %}
       {{ include("@templates/alert-message.twig",{
@@ -19,7 +19,7 @@ file that was distributed with this source code. #}
     <form id="groupmanagementOptions" class="form-horizontal" action="" method="post">
       <input type="hidden" name="view" value="options">
       <input type="hidden" name="action" value="save">
-      {{ include("@bazar/inputs/select.twig",{
+      {{ include("@groupmanagement/actions/groupmanagement-select.twig",{
         field:{
           propertyName: "options[parentsForm]",
           required: true,
@@ -28,9 +28,10 @@ file that was distributed with this source code. #}
           hint: _t('GRPMNGT_ACTION_PARENTSFORM_HINT'),
         },
         value: options.parentsForm,
-        options: forms,
+        options: parentsForms|map(form => "#{form.label} (#{form.id})"),
+        typeSelect: 'parent',
       }) }}
-      {{ include("@bazar/inputs/select.twig",{
+      {{ include("@groupmanagement/actions/groupmanagement-select2.twig",{
         field:{
           propertyName: "options[childrenForm]",
           required: true,
@@ -39,17 +40,18 @@ file that was distributed with this source code. #}
           hint: _t('GRPMNGT_ACTION_CHILDRENFORM_HINT'),
         },
         value: options.childrenForm,
-        options: forms,
+        options: childrenForms|map(form => "#{form.label} (#{form.id})"),
+        typeSelect: 'child',
       }) }}
-      {{ include("@bazar/inputs/text.twig",{
+      {{ include("@groupmanagement/actions/groupmanagement-checkbox.twig",{
         field:{
-          propertyName: "options[fieldName]",
-          name: "options[fieldName]",
-          type: "text",
-          subtype: "text",
+          propertyName: "options[fieldNames]",
+          type: "checkbox",
+          fromFormId: '[fromForm]',
           label: _t('GRPMNGT_ACTION_FIELDNAME_LABEL'),
         },
-        value: options.fieldName,
+        selectedOptionsId: options.fieldNames|split(','),
+        oldValue: options.fieldNames,
       }) }}
       {{ include("@bazar/inputs/text.twig",{
         field:{
@@ -95,3 +97,6 @@ file that was distributed with this source code. #}
     <a class="btn btn-default btn-xs" href="{{ url({params:{}}) }}">{{ _t('GO_BACK') }}</a>
   </div>
 </div>
+
+{{ include_javascript('tools/groupmanagement/javascripts/vendor/alpinejs/cdn.min.js') }}
+{{ include_javascript('tools/groupmanagement/javascripts/groupmanagement-options.js',true) }}

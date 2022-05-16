@@ -1,0 +1,28 @@
+{% extends "@bazar/layouts/input.twig" %}
+
+{% block input %}
+	<label class="pull-right"><input type="checkbox" @change="toogleCheckbox($el,'.group-checkbox-{{ field.propertyName|replace({'[':'\\\\[',']':'\\\\]'}) }} .checkbox')"/>{{ _t('BAZAR_CHECKALL') }}</label>
+	{% block list_options %}
+    <div class="bazar-checkbox-cols group-checkbox-{{ field.propertyName }}{{ field.required ? ' chk_required' : ''}}"
+        x-init="initSelectedFields('{{ oldValue }}');">
+        <template x-for="field in availableFields">
+            <div class="checkbox">
+                <label :for="`{{ field.propertyName ~ '[${field.propertyname}]' }}`">
+			  {% apply spaceless %}
+                <input 
+                    class="element_checkbox" 
+                    type="checkbox" 
+                    :id="`{{ field.propertyName ~ '[${field.propertyname}]' }}`" 
+                    :name="`{{ field.propertyName ~ '[${field.propertyname}]' }}`" 
+                    value="1"
+                    x-bind="checkboxCheck(field)"
+                    @change="saveCheckboxValue($el,`${field.propertyname}`)" />
+                <span x-text="`${field.propertyname} (${field.label})`"></span>
+			  {% endapply %}
+            </label>
+            </div>
+        </template>
+    </div>
+	{% endblock %}
+	<input type="hidden" value="{{ oldValue ?? '\'\''}}" name="{{ field.propertyName  ~ field.fromFormId }}">
+{% endblock %}

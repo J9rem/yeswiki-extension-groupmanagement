@@ -1,0 +1,21 @@
+{% extends "@bazar/layouts/input.twig" %}
+
+{% block input %}
+    <select
+        id="{{ field.propertyName }}"
+        name="{{ field.propertyName }}"
+        class="form-control"
+        @change="updateSelected($el,'{{ typeSelect }}')"
+        required
+        {% if field.default is not empty %}data-default="{{ field.default }}"{% endif %}
+    >
+        {% if not value %}
+            <option value='' selected="selected">{{ _t('BAZ_CHOISIR') }}</option>
+        {% else %}{# To be able to unselect we need an empty option#}
+            <option value=''></option>
+        {% endif %}
+        <template x-for="(form,index) in availableChildrenForms">
+            <option :value="form.id" x-bind="getSelected(index,{{ value|json_encode }},$el)" x-text="`${form.label} (${form.id})`"></option>
+        </template>
+    </select>
+{% endblock %}

@@ -35,7 +35,7 @@ class GroupManagementAction extends YesWikiAction
     private $groupsWithSuffix ;
     private $allEntries ;
     private $allEntriesIds ;
-    private $associatedField ;
+    private $associatedFields ;
     private $options;
     private $allUsers;
 
@@ -151,12 +151,45 @@ class GroupManagementAction extends YesWikiAction
             $saved = $this->setOptions() ? "ok" : "error";
             $this->getOptions();
         }
+        $forms = $this->formManager->getAll();
+        $formsIds = array_values(array_map(function ($form) {
+            return $form['bn_id_nature'];
+        }, $forms));
+        $forms = array_map(function ($form) use ($formsIds) {
+            return [
+                'id' => $form['bn_id_nature'],
+                'label' => $form['bn_label_nature'],
+                'fields' => array_filter($form['prepared'], function ($field) use ($formsIds) {
+                    return $this->isRightField($field, $formsIds);
+                }),
+            ];
+        }, $forms);
+        $childrenForms = array_filter($forms, function ($form) {
+            return !empty($form['fields']);
+        });
+        $parentsFormsIds = [];
+        foreach ($childrenForms as $form) {
+            foreach ($form['fields'] as $field) {
+                $parentFormId = $field->getLinkedObjectName();
+                if (!isset($parentsFormsIds[$parentFormId])) {
+                    $parentsFormsIds[$parentFormId] = [];
+                }
+                if (!in_array($form['id'], $parentsFormsIds[$parentFormId])) {
+                    $parentsFormsIds[$parentFormId][] = $form['id'];
+                }
+            }
+        }
+        $parentsForms = array_filter($forms, function ($form) use ($parentsFormsIds) {
+            return in_array($form['id'], array_keys($parentsFormsIds));
+        });
+        $parentsForms = array_map(function ($form) use ($parentsFormsIds) {
+            return $form + ['availableChildren' => $parentsFormsIds[$form['id']] ];
+        }, $parentsForms);
         return $this->render("@groupmanagement/actions/groupmanagement-options.twig", [
             'options' => $this->options,
             'saved' => $saved,
-            'forms' => array_map(function ($form) {
-                return "{$form['bn_label_nature']} ({$form['bn_id_nature']})";
-            }, $this->formManager->getAll()),
+            'childrenForms' => $childrenForms,
+            'parentsForms' => $parentsForms,
             'title' => $this->arguments['title'],
         ]);
     }
@@ -177,14 +210,14 @@ class GroupManagementAction extends YesWikiAction
         }
         $this->options = $options;
 
-        $this->associatedField = $this->findAssociatedField($this->options['fieldName'] ?? "");
+        $this->associatedFields = $this->findAssociatedFields($this->options['fieldNames'] ?? "");
 
         return !empty($this->options['parentsForm']) &&
             !empty($this->options['childrenForm']) &&
             !empty($this->options['groupSuffix']) &&
             strlen($this->options['groupSuffix']) > 3 &&
             isset($this->options['allowedToWrite']) &&
-            !empty($this->associatedField) ;
+            !empty($this->associatedFields) ;
     }
 
     private function setOptions(): bool
@@ -204,16 +237,31 @@ class GroupManagementAction extends YesWikiAction
                 && in_array($options['allowedToWrite']['allowedToWrite'], [1,"1",true,"true"])
             )
         );
+        $options['fieldNames'] = empty($options['fieldNames'])
+            ? ""
+            : (
+                is_string($options['fieldNames'])
+                ? $options['fieldNames']
+                : (
+                    is_array($options['fieldNames'])
+                    ? implode(',', array_keys(array_filter($options['fieldNames'], function ($value, $key) {
+                        return $key != "fromForm" && in_array($value, [1,"1",true,"true"], true);
+                    }, ARRAY_FILTER_USE_BOTH)))
+                    : ""
+                )
+            );
         $options = filter_var_array($options, [
             'parentsForm' => FILTER_SANITIZE_STRING,
             'childrenForm' => FILTER_SANITIZE_STRING,
-            'fieldName' => FILTER_SANITIZE_STRING,
+            'fieldNames' => FILTER_SANITIZE_STRING,
             'groupSuffix' => FILTER_SANITIZE_STRING,
             'allowedToWrite' => FILTER_VALIDATE_BOOL,
             'mainGroup' => FILTER_SANITIZE_STRING,
         ]);
-        $field = $this->findAssociatedField(!empty($options['fieldName']) ? $options['fieldName'] : "");
-        $options['fieldName'] = empty($field) ? "" : (!empty($field->getName()) ? $field->getName() : $field->getPropertyName());
+        $fields = $this->findAssociatedFields(!empty($options['fieldNames']) ? $options['fieldNames'] : "", $options['childrenForm'], $options['parentsForm']);
+        $options['fieldNames'] = empty($fields) ? "" : implode(',', array_map(function ($field) {
+            return $field->getPropertyName();
+        }, $fields));
 
         $previousItems = $this->tripleStore->getAll($tag, self::TRIPLE_PROPERTY, "", "");
         if (!empty($previousItems)) {
@@ -281,16 +329,24 @@ class GroupManagementAction extends YesWikiAction
 
     private function getAccountsWithEntriesLinkedToSelectedEntry(string $selectedEntry): array
     {
-        $entries = $this->entryManager->search(
-            [
-                'formsIds' => [$this->options['childrenForm']],
-                'queries' => [
-                    $this->associatedField->getPropertyName() => $selectedEntry
+        $entries = [];
+        foreach ($this->associatedFields as $field) {
+            $foundEntries = $this->entryManager->search(
+                [
+                    'formsIds' => [$this->options['childrenForm']],
+                    'queries' => [
+                        $field->getPropertyName() => $selectedEntry
+                    ],
                 ],
-            ],
-            true,
-            true
-        );
+                true,
+                true
+            );
+            foreach ($foundEntries as $foundEntry) {
+                if (!isset($entries[$foundEntry['id_fiche']])) {
+                    $entries[$foundEntry['id_fiche']] = $foundEntry;
+                }
+            }
+        }
         $accounts = [];
         
         $users = $this->getAllUsers();
@@ -428,35 +484,46 @@ class GroupManagementAction extends YesWikiAction
         }
     }
 
-    private function findAssociatedField(string $fieldName = ""): ?EnumField
+    private function findAssociatedFields(string $fieldNames = "", string $newChildformId = "", string $newParentFormId = ""): array
     {
-        if (empty($this->options['childrenForm'])) {
-            return null;
+        if (empty($newChildformId) && empty($this->options['childrenForm'])) {
+            return [];
         }
-        if (!empty($fieldName)) {
-            $field = $this->formManager->findFieldFromNameOrPropertyName($fieldName, $this->options['childrenForm']);
+        if (empty($newChildformId)) {
+            $newChildformId = $this->options['childrenForm'];
         }
-        if (empty($field) || !$this->isRightField($field)) {
-            $form = $this->formManager->getOne($this->options['childrenForm']);
+        $fields = [];
+        $newparents = empty($newParentFormId) ? [] : [$newParentFormId];
+        if (!empty($fieldNames)) {
+            foreach (explode(',', $fieldNames) as $newFieldName) {
+                $newField = $this->formManager->findFieldFromNameOrPropertyName($newFieldName, $newChildformId);
+                if (!empty($newField) && $this->isRightField($newField, $newparents) && empty(array_filter($fields, function ($field) use ($newField) {
+                    return $field->getPropertyName() == $newField->getPropertyName();
+                }))) {
+                    $fields[] = $newField;
+                }
+            }
+        }
+        if (empty($fields)) {
+            $form = $this->formManager->getOne($newChildformId);
             if (empty($form)) {
-                return null;
+                return [];
             } else {
                 foreach ($form['prepared'] as $field) {
-                    if ($this->isRightField($field)) {
-                        return $field;
+                    if ($this->isRightField($field, $newparents)) {
+                        $fields[] = $field;
                     }
                 }
-                return null;
             }
         }
 
-        return $field;
+        return $fields;
     }
 
-    private function isRightField(BazarField $field): bool
+    private function isRightField(BazarField $field, array $rightIds = []): bool
     {
         return ($field instanceof SelectEntryField || $field instanceof RadioEntryField || $field instanceof CheckboxEntryField) &&
-            $field->getLinkedObjectName() == $this->options['parentsForm'];
+            (empty($rightIds) ? $field->getLinkedObjectName() == $this->options['parentsForm'] : in_array($field->getLinkedObjectName(), $rightIds));
     }
 
     private function getAllUsers(): array
