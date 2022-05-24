@@ -17,10 +17,8 @@ if (isset($data) &&
 }
 
 $paths = $this->twigLoader->getPaths("aceditor");
-$curDir = str_replace("\\","/",dirname($this->twigLoader->getCacheKey($templatePath)));
-if (substr($curDir,0,1) == "/"){
-    $curDir = substr($curDir,1);
-}
+$curExtDirName = basename(dirname(dirname(dirname(__FILE__))));
+$curDir = "tools/$curExtDirName/templates/aceditor";
 
 // render next following custom actions-builder.tpl.html
 $curPos = array_search($curDir,$paths);
