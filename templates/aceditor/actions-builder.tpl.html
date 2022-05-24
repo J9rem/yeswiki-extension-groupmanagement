@@ -17,12 +17,16 @@ if (isset($data) &&
 }
 
 $paths = $this->twigLoader->getPaths("aceditor");
+$curDir = str_replace("\\","/",dirname($this->twigLoader->getCacheKey($templatePath)));
+if (substr($curDir,0,1) == "/"){
+    $curDir = substr($curDir,1);
+}
 
 // render next following custom actions-builder.tpl.html
-$curPos = array_search('tools/groupmanagement/templates/aceditor',$paths);
+$curPos = array_search($curDir,$paths);
 if ($curPos !== false) {
     for ($i=($curPos+1); $i < count($paths); $i++) { 
-        if ($this->hasTemplate("{$paths[$i]}/actions-builder.tpl.html")){
+        if ($paths[$i] != $curDir && $this->hasTemplate("{$paths[$i]}/actions-builder.tpl.html")){
             echo $this->render("{$paths[$i]}/actions-builder.tpl.html",compact(['data']));
             break;
         }
