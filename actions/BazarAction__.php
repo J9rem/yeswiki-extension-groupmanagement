@@ -24,6 +24,7 @@ class BazarAction__ extends YesWikiAction
             && isset($this->arguments[BazarAction::VARIABLE_ACTION]) && in_array($this->arguments[BazarAction::VARIABLE_ACTION], [BazarAction::ACTION_FORM_CREATE,BazarAction::ACTION_FORM_EDIT], true)
             ) {
             $this->wiki->AddJavascriptFile('tools/groupmanagement/javascripts/autoregisterlinkedentry/form-edit-template.js');
+            $this->wiki->AddJavascriptFile('tools/groupmanagement/javascripts/aclselectfield/form-edit-template.js');
         }
     }
 }

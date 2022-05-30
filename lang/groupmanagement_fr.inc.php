@@ -13,6 +13,12 @@ return [
 
     // docs/actions/bazarliste.yaml
     'GRPMNGT_BAZARLISTE_PARAM_LABEL' => 'Afficher uniquement les fiches que l\'utilisateur peut modifier',
+
+    // fields/AclSelect.php
+    'GRPMNGT_ACLSELECT_LABEL' => 'Visibilité de cette fiche',
+    'GRPMNGT_ACLSELECT_PUBLIC' => 'publique',
+    'GRPMNGT_ACLSELECT_LIMITED_TO_MEMBERS' => 'limitée aux membres',
+    'GRPMNGT_ACLSELECT_LIMITED_TO_MEMBERS_HINT' => 'les membres sont les profils validés par les administrateurs des structures où vous êtes membres',
     
     // tools/groupmanagement/actions/GroupManagementAction.php
     'GRPMNGT_ACTION_NO_USER' => 'L\'action \'{{groupmanagement}}\' est réservée aux personnes connectées.',
