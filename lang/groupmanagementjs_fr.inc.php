@@ -17,5 +17,6 @@ return [
     'GRPMNGT_ACLSELECT_SUFFIX_HINT' => 'Permet de réduire la visibilité aux membres validés de vos structures',
     'GRPMNGT_ACLSELECT_PUBLIC' => 'publique',
     'GRPMNGT_ACLSELECT_LIMITED_TO_MEMBERS' => 'limitée aux membres',
+    'GRPMNGT_ACLSELECT_LINKFIELD_LABEL' => 'Champ pour les fiches liées',
     
 ];

@@ -11,10 +11,11 @@ typeUserAttrs = {
   ...typeUserAttrs,
   ...{
     "aclselect": {
-      suffix: { label: _t('GRPMNGT_ACLSELECT_SUFFIX_LABEL'), value: "Members"},
       hint: {label: _t('BAZ_FORM_EDIT_HELP'), value:_t('GRPMNGT_ACLSELECT_SUFFIX_HINT')},
       read: readConf,
       write: writeconf,
+      suffix: { label: _t('GRPMNGT_ACLSELECT_SUFFIX_LABEL'), value: "Members"},
+      linkfield: { label: _t('GRPMNGT_ACLSELECT_LINKFIELD_LABEL'), value: "bf_structure"},
       readEntry: { label: _t('BAZ_FORM_EDIT_ACL_READ_LABEL'), options: aclsOptions, multiple: true },
       writeEntry: { label: _t('BAZ_FORM_EDIT_ACL_WRITE_LABEL'), options: aclsOptions, multiple: true },
       commentEntry: { label: _t('BAZ_FORM_EDIT_ACL_COMMENT_LABEL'), options: aclsCommentOptions, multiple: true },
@@ -52,6 +53,7 @@ yesWikiMapping = {
         4: "writeEntry",
         8: "commentEntry",
         9: "suffix",
+        13: "linkfield"
       }
     }
   }

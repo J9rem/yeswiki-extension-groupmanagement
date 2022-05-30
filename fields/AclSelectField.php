@@ -14,11 +14,13 @@ class AclSelectField extends BazarField
     protected $entryWriteRight;
     protected $entryCommentRight;
     protected $suffix;
+    protected $linkfieldname;
 
     protected const FIELD_ENTRY_READ_RIGHT = 3;
     protected const FIELD_ENTRY_WRITE_RIGHT = 4;
     protected const FIELD_ENTRY_COMMENT_RIGHT = 8;
     protected const FIELD_SUFFIX_READ_GROUP = 9;
+    protected const FIELD_LINKFIELDNAME = 13;
 
     protected const PUBLIC_VALUE = "public";
     protected const PROTECTED_VALUE = "protected";
@@ -36,6 +38,7 @@ class AclSelectField extends BazarField
         $this->entryCommentRight = $values[self::FIELD_ENTRY_COMMENT_RIGHT];
         $this->suffix = $values[self::FIELD_SUFFIX_READ_GROUP];
         $this->required = true;
+        $this->linkfieldname = $values[self::FIELD_LINKFIELDNAME];
     }
 
     protected function renderInput($entry)
@@ -64,25 +67,35 @@ class AclSelectField extends BazarField
             $wiki->SaveAcl($entry['id_fiche'], 'comment', $this->replaceWithCreator($this->entryCommentRight, $entry));
         }
         $value = $this->getValue($entry);
-        $readAcl = "{$entry['id_fiche']}{$this->getSuffix()}";
-        $oldAcls = $wiki->LoadAcl($entry['id_fiche'], 'read', false)['list'];
-        if ($value == self::PROTECTED_VALUE) {
+        if (!empty($this->linkfieldname)) {
+            $suffix = $this->getSuffix();
+            $oldAcls = $wiki->LoadAcl($entry['id_fiche'], 'read', false)['list'];
             $oldAclsFiltered = array_filter(array_map('trim', explode("\n", str_replace(["\r\n","\r"], "\n", $oldAcls))), function ($line) {
-                return !empty($line) && !in_array($line, ["*","+"]) && substr($line, 0, 1) != "!";
+                return !empty($line)  &&
+                !(
+                    substr($line, 0, 1) == "@" && substr($line, -strlen($suffix) == $suffix)
+                );
             });
-            if (!in_array("@$readAcl", $oldAclsFiltered)) {
-                $oldAclsFiltered[] = "@$readAcl";
+            $linkedValues = $this->sanitizeValues($entry[$this->linkfieldname] ?? [], "array");
+            if ($value == self::PROTECTED_VALUE) {
+                $oldAclsFiltered = array_filter($oldAclsFiltered, function ($line) {
+                    return !in_array($line, ["*","+"]) &&
+                        substr($line, 0, 1) != "!" ;
+                });
+                foreach ($linkedValues as $key) {
+                    $readAcl = "$key{$this->getSuffix()}";
+                    if (!in_array("@$readAcl", $oldAclsFiltered)) {
+                        $oldAclsFiltered[] = "@$readAcl";
+                    }
+                }
+            } else {
+                if (!in_array("*", $oldAclsFiltered)) {
+                    $oldAclsFiltered[] = "*";
+                }
             }
-        } else {
-            $oldAclsFiltered = array_filter(array_map('trim', explode("\n", str_replace(["\r\n","\r"], "\n", $oldAcls))), function ($line) {
-                return !empty($line);
-            });
-            if (!in_array("*", $oldAclsFiltered)) {
-                $oldAclsFiltered[] = "*";
-            }
+            $newAcls = implode("\n", $oldAclsFiltered)."\n";
+            $wiki->SaveAcl($entry['id_fiche'], 'read', $newAcls);
         }
-        $newAcls = implode("\n", $oldAclsFiltered)."\n";
-        $wiki->SaveAcl($entry['id_fiche'], 'read', $newAcls);
 
         return [
             $this->getPropertyName() => $value,
@@ -116,6 +129,38 @@ class AclSelectField extends BazarField
     {
         return $this->suffix;
     }
+    public function getLinkfieldname()
+    {
+        return $this->linkfieldname;
+    }
+
+    /**
+     * @param string|array $rawValue
+     * @param string $format "string" or "array"
+     * @return array|string
+     */
+    private function sanitizeValues($rawValue, string $format = "string")
+    {
+        if (is_array($rawValue)) {
+            $rawValue = array_filter($rawValue, function ($value) {
+                return in_array($value, [1,"1",true,"true"]);
+            });
+            $rawValue = array_keys($rawValue);
+            if ($format == "string") {
+                $rawValue = implode(',', $rawValue) ;
+            }
+        } else {
+            try {
+                $rawValue = strval($rawValue) ;
+            } catch (\Throwable $th) {
+                $rawValue = "";
+            }
+            if ($format != "string") {
+                $rawValue = empty(trim($rawValue)) ? [] : explode(',', $rawValue);
+            }
+        }
+        return $rawValue;
+    }
 
     
     public function jsonSerialize()
@@ -136,7 +181,8 @@ class AclSelectField extends BazarField
             'entryReadRight' => $this->entryReadRight,
             'entryWriteRight' => $this->entryWriteRight,
             'entryCommentRight' => $this->entryCommentRight,
-            'suffix' => $this->getSuffix()
+            'suffix' => $this->getSuffix(),
+            'linkfieldname' => $this->getLinkfieldname()
             ];
     }
 }
