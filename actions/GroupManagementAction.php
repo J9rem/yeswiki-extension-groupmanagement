@@ -64,7 +64,7 @@ class GroupManagementAction extends YesWikiAction
         $optionsReady = $this->getOptions();
         $isAdmin = $this->wiki->UserIsAdmin();
 
-        if ($isAdmin && filter_input(INPUT_POST, 'view', FILTER_SANITIZE_STRING) == "options") {
+        if ($isAdmin && filter_input(INPUT_POST, 'view', FILTER_UNSAFE_RAW) === "options") {
             return $this->manageOptions();
         }
         
@@ -83,7 +83,8 @@ class GroupManagementAction extends YesWikiAction
                 $this->appendEntriesWhereAllowedToWrite($entriesWhereAdmin, $user);
             }
             if (!empty($entriesWhereAdmin)) {
-                $selectedEntry = filter_input(INPUT_POST, 'selectedEntry', FILTER_SANITIZE_STRING);
+                $selectedEntry = filter_input(INPUT_POST, 'selectedEntry', FILTER_UNSAFE_RAW);
+                $selectedEntry = in_array($selectedEntry,[false,null],true) ? $selectedEntry : htmlspecialchars(strip_tags($selectedEntry));
                 if (count($entriesWhereAdmin) == 1) {
                     $selectedEntry = $entriesWhereAdmin[0];
                 }
@@ -92,8 +93,8 @@ class GroupManagementAction extends YesWikiAction
                         $errorMsg = _t('GRPMNGT_ACTION_WRONG_ENTRYID', ['selectedEntryId' => $selectedEntry]);
                         $selectedEntry = "";
                     } else {
-                        if (filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING) == "save" &&
-                            $selectedEntry == filter_input(INPUT_POST, 'previousSelectedEntry', FILTER_SANITIZE_STRING)
+                        if (filter_input(INPUT_POST, 'action', FILTER_UNSAFE_RAW) === "save" &&
+                            $selectedEntry === filter_input(INPUT_POST, 'previousSelectedEntry', FILTER_UNSAFE_RAW)
                         ) {
                             $this->saveGroup($selectedEntry);
                         }
@@ -147,7 +148,7 @@ class GroupManagementAction extends YesWikiAction
     private function manageOptions(): ?string
     {
         $saved = "not-needed";
-        if (filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING) == "save") {
+        if (filter_input(INPUT_POST, 'action', FILTER_UNSAFE_RAW) === "save") {
             $saved = $this->setOptions() ? "ok" : "error";
             $this->getOptions();
         }
@@ -251,12 +252,12 @@ class GroupManagementAction extends YesWikiAction
                 )
             );
         $options = filter_var_array($options, [
-            'parentsForm' => FILTER_SANITIZE_STRING,
-            'childrenForm' => FILTER_SANITIZE_STRING,
-            'fieldNames' => FILTER_SANITIZE_STRING,
-            'groupSuffix' => FILTER_SANITIZE_STRING,
+            'parentsForm' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'childrenForm' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'fieldNames' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            'groupSuffix' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
             'allowedToWrite' => FILTER_VALIDATE_BOOL,
-            'mainGroup' => FILTER_SANITIZE_STRING,
+            'mainGroup' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
         ]);
         $fields = $this->findAssociatedFields(!empty($options['fieldNames']) ? $options['fieldNames'] : "", $options['childrenForm'], $options['parentsForm']);
         $options['fieldNames'] = empty($fields) ? "" : implode(',', array_map(function ($field) {
