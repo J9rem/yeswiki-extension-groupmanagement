@@ -44,6 +44,12 @@ This extension allows you to transfer the right to certain accounts to define gr
 
 The newly created groups can then be used anywhere to set finer read or edit rights.
 
+**Restriction only for specific structures**:
+ - it is possible to activate the option only for specific `strcutures`.
+ - for that:
+   1. go to the page `GererConfig` on the wiki
+   2. in the part `groupmanagement`, for option `groupmanagement[authorizedParents]`, itype the list of entry's name of concerned `structures`, separated by coma (put `*` to authorized all entries)
+
 #### Tips
 
  - bazar field `autoregisterlinkedentryatcreation` aims to be added in the `structure` form so that the connected account is automatically linked to this `structure` when it is created. This can only work if the logged-in user already has a `member` card associated with their account.
@@ -98,6 +104,12 @@ Cet extension permet de transférer le droit à certains comptes de définir des
  14. Vous pouvez maintenant choisir une structure et autoriser les membres potentiels à être amdinstrateurs.
 
 Les nouveaux groupes créés peuvent alors être utilisés partout pour définir des droits de lecture ou de modification plus fins.
+
+**Restriction uniquement pour certaines structures**:
+ - il est possible de restreindre l'option uniquement à certaines `strcutures`.
+ - pour celà :
+   1. se rendre dans la page `GererConfig` de votre wiki
+   2. dans la partie `groupmanagement`, pour l'option `groupmanagement[authorizedParents]`, indiquer la liste des noms des fiches `structures` concernées, séparées par des virguules (mettre `*` pour retirer la restriction)
 
 #### Astuces
 

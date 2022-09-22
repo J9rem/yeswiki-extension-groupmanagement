@@ -35,6 +35,7 @@ class GroupManagementAction extends YesWikiAction
     private $groupsWithSuffix ;
     private $associatedFields ;
     private $parents;
+    private $authorizedParents;
     private $options;
 
     public function formatArguments($args)
@@ -54,18 +55,19 @@ class GroupManagementAction extends YesWikiAction
         $this->formManager = $this->getService(FormManager::class);
         $this->tripleStore = $this->getService(TripleStore::class);
         $this->userManager = $this->getService(UserManager::class);
-        
+
         $errorMsg = "";
 
         $this->options = [];
         $optionsReady = $this->getOptions();
         $isAdmin = $this->wiki->UserIsAdmin();
         $this->parents = [];
+        $this->authorizedParents = null;
 
         if ($isAdmin && filter_input(INPUT_POST, 'view', FILTER_UNSAFE_RAW) === "options") {
             return $this->manageOptions();
         }
-        
+
         $user = $this->userManager->getLoggedUser();
         if (!$user) {
             $errorMsg = _t('GRPMNGT_ACTION_NO_USER');
@@ -74,12 +76,12 @@ class GroupManagementAction extends YesWikiAction
         } else {
             $this->getGroupsWithSuffix();
             $parentsWhereOwner = $this->getParentsWhereOwner($user);
-            $parentsWhereAdmin = 
+            $parentsWhereAdmin =
                 $isAdmin
                 ? $this->getParentsIds()
                 : (
                     $this->options['allowedToWrite']
-                    ? $this->getParentsWhereAdmin($parentsWhereOwner,$user)
+                    ? $this->getParentsWhereAdmin($parentsWhereOwner, $user)
                     : $parentsWhereOwner
                 );
 
@@ -88,7 +90,7 @@ class GroupManagementAction extends YesWikiAction
                     $selectedEntry = $parentsWhereAdmin[0];
                 } else {
                     $selectedEntry = filter_input(INPUT_POST, 'selectedEntry', FILTER_UNSAFE_RAW);
-                    $selectedEntry = in_array($selectedEntry,[false,null],true) ? $selectedEntry : htmlspecialchars(strip_tags($selectedEntry));
+                    $selectedEntry = in_array($selectedEntry, [false,null], true) ? $selectedEntry : htmlspecialchars(strip_tags($selectedEntry));
                 }
                 if (!empty($selectedEntry)) {
                     if (!$this->isParent($selectedEntry)) {
@@ -114,9 +116,9 @@ class GroupManagementAction extends YesWikiAction
                         }
                         if ($isAdmin) {
                             $currentEntry = $this->parents[$selectedEntry] ?? [];
-                            if (!empty($currentEntry['owner'])){
+                            if (!empty($currentEntry['owner'])) {
                                 $currentEntryOwner = $this->userManager->getOneByName($currentEntry['owner']);
-                                if (!empty($currentEntryOwner) && !in_array($currentEntry['owner'], $dragNDropOptions)){
+                                if (!empty($currentEntryOwner) && !in_array($currentEntry['owner'], $dragNDropOptions)) {
                                     $dragNDropOptions[$currentEntry['owner']] = $currentEntry['owner'];
                                     $accountsWithEntriesLinkedToSelectedOneWithData[$currentEntry['owner']] = ['isOwner' => true];
                                 }
@@ -281,7 +283,7 @@ class GroupManagementAction extends YesWikiAction
     {
         $suffix = $this->options['groupSuffix'];
         $res = $this->tripleStore->getMatching(
-            GROUP_PREFIX . "%$suffix", 
+            GROUP_PREFIX . "%$suffix",
             WIKINI_VOC_ACLS_URI
         );
         $prefix_len = strlen(GROUP_PREFIX);
@@ -300,7 +302,7 @@ class GroupManagementAction extends YesWikiAction
         $entries = $this->entryManager->search([
             'formsIds' => [$this->options['parentsForm']],
             'user' => $user['name'],
-        ], true, true);
+        ]+$this->getAuthorizedParentsOptions(), true, true);
         return empty($entries) ? [] : array_values(array_map(function ($entry) {
             return $entry['id_fiche'];
         }, $entries));
@@ -329,36 +331,62 @@ class GroupManagementAction extends YesWikiAction
 
     private function isParent(string $tag): bool
     {
-        if (!empty($this->parents[$tag])){
+        if (!empty($this->parents[$tag])) {
             return true;
         }
-        if (!$this->entryManager->isEntry($tag)){
+        if (!$this->entryManager->isEntry($tag)) {
             return false;
         }
         $entry = $this->entryManager->getOne($tag);
-        if (empty($entry) || empty($entry['id_typeannonce'])){
+        if (empty($entry) || empty($entry['id_typeannonce'])) {
             return false;
         }
-        if (strval($entry['id_typeannonce']) != strval($this->options['parentsForm'])){
+        if (strval($entry['id_typeannonce']) != strval($this->options['parentsForm'])) {
             return false;
         }
         $this->parents[$tag] = $entry;
         return true;
     }
 
+    private function getAuthorizedParents(): array
+    {
+        if (is_null($this->authorizedParents)) {
+            $this->authorizedParents = [];
+            $config = $this->params->get('groupmanagement');
+            if (!empty($config['authorizedParents']) && is_string($config['authorizedParents'])) {
+                $this->authorizedParents = $config['authorizedParents'] == "*"
+                    ? ['*']
+                    : array_filter(array_map('trim', explode(',', $config['authorizedParents'])));
+            }
+        }
+        return $this->authorizedParents;
+    }
+
+    private function getAuthorizedParentsOptions(): array
+    {
+        $authorizedParents = $this->getAuthorizedParents();
+        $otherOptions = [];
+        if (!empty($authorizedParents) && $authorizedParents[0] != "*") {
+            $otherOptions['queries'] = [
+                'id_fiche' => implode(',', $authorizedParents)
+            ];
+        }
+        return $otherOptions;
+    }
+
     private function getAllParents(): array
     {
         $entries = $this->entryManager->search([
             'formsIds' => [$this->options['parentsForm']],
-        ], false, false);
+        ]+$this->getAuthorizedParentsOptions(), false, false);
         return empty($entries) ? [] : $entries;
     }
 
     private function getParentsIds(): array
     {
         $this->parents = [];
-        foreach($this->getAllParents() as $entry){
-            if (!empty($entry['id_fiche'])){
+        foreach ($this->getAllParents() as $entry) {
+            if (!empty($entry['id_fiche'])) {
                 $this->parents[$entry['id_fiche']] = $entry;
             }
         }
@@ -390,7 +418,7 @@ class GroupManagementAction extends YesWikiAction
         foreach ($entries as $entry) {
             if (isset($entry['owner'])) {
                 $owner = trim($entry['owner']);
-                if (!empty($owner)){
+                if (!empty($owner)) {
                     $user = $this->userManager->getOneByName($owner);
                     if (!empty($user) && !isset($accounts[$owner])) {
                         $accounts[$owner] = [
@@ -407,10 +435,10 @@ class GroupManagementAction extends YesWikiAction
     private function getAccountsInGroupForSelectedEntry(string $selectedEntry): array
     {
         $groupAcl = $this->wiki->GetGroupACL("{$selectedEntry}{$this->options['groupSuffix']}");
-        if (empty($groupAcl)){
+        if (empty($groupAcl)) {
             return [];
         }
-        
+
         $groupmembers = array_filter(array_map('trim', explode("\n", $groupAcl)), function ($line) {
             switch ($line) {
                 case '*':
@@ -442,7 +470,7 @@ class GroupManagementAction extends YesWikiAction
             $this->addGroupToMainGroup($groupName);
             $this->updateWriteAcl($selectedEntry, $groupName);
             $this->updateReadAcl($selectedEntry, $groupName);
-            
+
             flash(_t('GRPMNGT_ACTION_VALUES_SAVED'), "success");
         }
     }
@@ -451,9 +479,9 @@ class GroupManagementAction extends YesWikiAction
     {
         $selectedUsers = [];
         foreach ($newData as $key => $value) {
-            if ($key != 'fromForm' && in_array($value, [1,"1",true,"true"])){
+            if ($key != 'fromForm' && in_array($value, [1,"1",true,"true"])) {
                 $userAccount = $this->userManager->getOneByName($key);
-                if (!empty($userAccount)){
+                if (!empty($userAccount)) {
                     $selectedUsers[] = $key;
                 }
             }
@@ -498,7 +526,7 @@ class GroupManagementAction extends YesWikiAction
             }
         }
     }
-    
+
     private function updateWriteAcl(string $selectedEntry, string $groupName)
     {
         $currentWrite = $this->aclService->load($selectedEntry, 'write', false);

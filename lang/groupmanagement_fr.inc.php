@@ -19,7 +19,7 @@ return [
     'GRPMNGT_ACLSELECT_PUBLIC' => 'publique',
     'GRPMNGT_ACLSELECT_LIMITED_TO_MEMBERS' => 'limitée aux membres',
     'GRPMNGT_ACLSELECT_LIMITED_TO_MEMBERS_HINT' => 'les membres sont les profils validés par les administrateurs des structures où vous êtes membres',
-    
+
     // tools/groupmanagement/actions/GroupManagementAction.php
     'GRPMNGT_ACTION_NO_USER' => 'L\'action \'{{groupmanagement}}\' est réservée aux personnes connectées.',
     'GRPMNGT_ACTION_NO_OPTIONS' => 'Les options de l\'action \'{{groupmanagement}}\' ne sont pas correctement paramétrées.',
@@ -73,4 +73,8 @@ return [
         "%Administrateur du site : ils peuvent toujours éditer les fiches, qu'ils soient dans le groupe ou pas (à droite ou à gauche).\n".
         "%Propriétaire de la fiche : ils peuvent toujours éditer les fiches, qu'ils soient dans le groupe ou pas (à droite ou à gauche).\n".
         "Il est conseillé de les ajouter à droite (dans le groupe) pour qu'ils gardent les droits d'administration de la fiche même si le propriétaire de la fiche change.\n",
+
+    // EditConfig
+    'EDIT_CONFIG_GROUP_GROUPMANAGEMENT' => 'Gestion des droits avancés (via l\'extension -groupmanagement-)',
+    'EDIT_CONFIG_HINT_GROUPMANAGEMENT[AUTHORIZEDPARENTS]' => 'Liste des fiches structures autorisées à gérer les droits, séparées par des virgules (*=toutes)',
 ];
