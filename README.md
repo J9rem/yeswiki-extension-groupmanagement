@@ -27,25 +27,28 @@ This extension allows you to transfer the right to certain accounts to define gr
 
 #### Configuration
 
+**Forms**
+To use this extension, it is needed to organize forms before : 
+- 1 form containing wanted users' group information (`structures`) which we keep the number.
+- 1 form to create entroes for members. The concerned member should have an account link to the entry `member`. This could be done with a field `utilisateur_wikini` to put in the form `member`.
+- _create a link between the two forms_ : add into the form `member`, if not already done, a field of type `liste`, `radio` or `checkbox` that is linked to the form `structure`.
+
+**Extension's usage**
+
  1. create, as an administrator, a new page
  2. use the `components` button, to add the rights management action `{{groupmanagement}}`
- 3. Save
- 4. Choose the form for which the option should be activated (e.g. a `structures` form) and note its number
- 5. Go to the form containing the members' cards and add, if this is not already the case, a field of type `list`, `radio` or `checkbox` which points to the form `structure`
- 6. It is often desirable that the logged-in person has an account linked to the `member` card. This can be guaranteed by the `utilisateur_wikini` field to be placed in the `member` form
- 7. return to the previously created page, as administrator
- 8. click on the toothed wheel of the action (not the one on the website)
- 9. choose the `structure` form first, the `member` form second and tick the `bazar` fields that need to be scanned
- 10. Check the box to give write rights if this is the desired behavior.
- 11. A suffix will be added to each `structures` card name to give the name of the associated group. This suffix is customizable.
- 12. It is possible to configure a macro group where each administrator of a structure will be added.
- 13. Save and then return
- 14. You can now choose a structure and allow potential members to be amdinstrators.
+ 3. click on the toothed wheel of the action (not the one on the website)
+ 4. choose the `structures` form first, the `member` form second and tick the `bazar` fields that need to be scanned
+ 5. Check the box to give write rights if this is the desired behavior.
+ 6. A suffix will be added to each `structures` card name to give the name of the associated group. This suffix is customizable.
+ 7. It is possible to configure a macro group where each administrator of a structure will be added,  **but the name must not contain underscore character**.
+ 8. Save and then return
+ 9. You can now choose a structure and allow potential members to be amdministrators.
 
 The newly created groups can then be used anywhere to set finer read or edit rights.
 
 **Restriction only for specific structures**:
- - it is possible to activate the option only for specific `strcutures`.
+ - it is possible to activate the option only for specific `structures`.
  - for that:
    1. go to the page `GererConfig` on the wiki
    2. in the part `groupmanagement`, for option `groupmanagement[authorizedParents]`, itype the list of entry's name of concerned `structures`, separated by coma (put `*` to authorized all entries)
@@ -88,25 +91,28 @@ Cet extension permet de transférer le droit à certains comptes de définir des
 
 #### Configuration
 
+**Les formulaires**
+Pour utiliser cette extension, il faut au préalable organiser vos formulaires : 
+- 1 formulaire qui contiendra les informations des groupes utilisateurs souhaités (`structures`) dont on note le numéro.
+- 1 formulaire pour la création des fiches des membres. Il est souvent souhaitable que la personne connectée ait un compte lié à la fiche `membre`. Ceci peut être garanti grâce au champ `utilisateur_wikini` à placer dans le formulaire `membre`.
+- _Lier les 2 formulaires_ : ajouter au formulaire `membre`, si ça n'est pas déjà le cas, un champ de type `liste`, `radio` ou `checkbox` qui pointe vers le formulaire `structure`.
+
+**Utilisation de l'extension**
+
  1. créer, en tant qu'administrateur, une nouvelle page
  2. utiliser le bouton `composants`, pour ajouter l'action de gestion des droits `{{groupmanagement}}`
- 3. sauvegarder
- 4. Choisir le formulaire pour lequel il faut activer l'option (par exemple un formulaire `structures`) et noter son numéro
- 5. Se rendre dans le formulaire contenant les fiches des membres et ajouter, si ça n'est pas déjà le cas, un champ de type `liste`, `radio` ou `checkbox` qui pointe vers le formulaire `structure`
- 6. Il est souvent souhaitable que la personne connecté ait un compte lié à la fiche `membre`. Ceci peut être garanti grâce au champ `utilisateur_wikini` à placer dans le formulaire `membre`
- 7. revenir dans la page précédemment créée, en tant qu'administrateur
- 8. cliquer sur la roue crantée de l'action (pas celle du site internet)
- 9. choisir le formulaire `structure` en premier, le formulaire `membre` en second et cocher les champs `bazar` qu'il faut scanner
- 10. cocher la case pour donner les droits d'écriture si c'est le comportement souhaité.
- 11. un suffixe sera ajouté à chaque nom de fiche `structures` pour donner le nom du groupe associé. Ce suffixe est personnalisable.
- 12. Il est possible de configurer un macro groupe où chaque administrateur d'une structure sera ajouté.
- 13. Sauvegarder puis retour
- 14. Vous pouvez maintenant choisir une structure et autoriser les membres potentiels à être amdinstrateurs.
+ 3. cliquer sur la roue crantée de l'action (pas celle du site internet)
+ 4. choisir le formulaire `structures` en premier, le formulaire `membre` en second et cocher les champs `bazar` qu'il faut scanner
+ 5. cocher la case pour donner les droits d'écriture si c'est le comportement souhaité.
+ 6. un suffixe sera ajouté à chaque nom de fiche `structures` pour donner le nom du groupe associé. Ce suffixe est personnalisable **mais n'accepte pas les underscores**.
+ 7. Il est possible de configurer un macro groupe où chaque administrateur d'une structure sera ajouté.
+ 8. Sauvegarder puis retour
+ 9. Vous pouvez maintenant choisir une structure et autoriser les membres potentiels à être administrateurs.
 
 Les nouveaux groupes créés peuvent alors être utilisés partout pour définir des droits de lecture ou de modification plus fins.
 
 **Restriction uniquement pour certaines structures**:
- - il est possible de restreindre l'option uniquement à certaines `strcutures`.
+ - il est possible de restreindre l'option uniquement à certaines `structures`.
  - pour celà :
    1. se rendre dans la page `GererConfig` de votre wiki
    2. dans la partie `groupmanagement`, pour l'option `groupmanagement[authorizedParents]`, indiquer la liste des noms des fiches `structures` concernées, séparées par des virguules (mettre `*` pour retirer la restriction)
