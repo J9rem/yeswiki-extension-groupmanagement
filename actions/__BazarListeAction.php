@@ -21,7 +21,7 @@ class __BazarListeAction extends YesWikiAction
     public function formatArguments($arg)
     {
         $keepOnlyEntriesWhereCanEdit = $this->formatBoolean($arg, false, 'keeponlyentrieswherecanedit');
-        if (!$keepOnlyEntriesWhereCanEdit) {
+        if (!$keepOnlyEntriesWhereCanEdit || $this->wiki->UserIsAdmin()) {
             return [];
         } else {
             $userManager = $this->getService(UserManager::class);
@@ -62,7 +62,7 @@ class __BazarListeAction extends YesWikiAction
             $entriesList = implode(',', array_values(array_map(function ($entry) {
                 return $entry['id_fiche'];
             }, $entries)));
-            
+
             return $this->appendIdFicheInQuery($arg, $entriesList);
         }
     }
@@ -88,7 +88,7 @@ class __BazarListeAction extends YesWikiAction
                 : [
                     'id_fiche' => $entriesList
                 ]
-                
+
         ];
     }
 }
