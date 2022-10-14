@@ -22,6 +22,7 @@ use YesWiki\Core\YesWikiAction;
 use YesWiki\Core\Service\AclService;
 use YesWiki\Core\Service\TripleStore;
 use YesWiki\Core\Service\UserManager;
+use YesWiki\Groupmanagement\Service\GroupManagementService;
 
 class GroupManagementAction extends YesWikiAction
 {
@@ -30,12 +31,11 @@ class GroupManagementAction extends YesWikiAction
     protected $aclService;
     protected $entryManager;
     protected $formManager;
+    protected $groupManagementService;
     protected $tripleStore;
     protected $userManager;
     private $groupsWithSuffix ;
     private $associatedFields ;
-    private $parents;
-    private $authorizedParents;
     private $options;
 
     public function formatArguments($args)
@@ -53,6 +53,7 @@ class GroupManagementAction extends YesWikiAction
         $this->aclService = $this->getService(AclService::class);
         $this->entryManager = $this->getService(EntryManager::class);
         $this->formManager = $this->getService(FormManager::class);
+        $this->groupManagementService = $this->getService(GroupManagementService::class);
         $this->tripleStore = $this->getService(TripleStore::class);
         $this->userManager = $this->getService(UserManager::class);
 
@@ -61,8 +62,6 @@ class GroupManagementAction extends YesWikiAction
         $this->options = [];
         $optionsReady = $this->getOptions();
         $isAdmin = $this->wiki->UserIsAdmin();
-        $this->parents = [];
-        $this->authorizedParents = null;
 
         if ($isAdmin && filter_input(INPUT_POST, 'view', FILTER_UNSAFE_RAW) === "options") {
             return $this->manageOptions();
@@ -75,13 +74,13 @@ class GroupManagementAction extends YesWikiAction
             $errorMsg = _t('GRPMNGT_ACTION_NO_OPTIONS');
         } else {
             $this->getGroupsWithSuffix();
-            $parentsWhereOwner = $this->getParentsWhereOwner($user);
+            $parentsWhereOwner = $this->groupManagementService->getParentsWhereOwner($user, $this->options['parentsForm']);
             $parentsWhereAdmin =
                 $isAdmin
-                ? $this->getParentsIds()
+                ? $this->groupManagementService->getParentsIds($this->options['parentsForm'])
                 : (
                     $this->options['allowedToWrite']
-                    ? $this->getParentsWhereAdmin($parentsWhereOwner, $user)
+                    ? $this->groupManagementService->getParentsWhereAdmin($parentsWhereOwner, $user, $this->options['groupSuffix'], $this->options['parentsForm'])
                     : $parentsWhereOwner
                 );
 
@@ -93,7 +92,7 @@ class GroupManagementAction extends YesWikiAction
                     $selectedEntry = in_array($selectedEntry, [false,null], true) ? $selectedEntry : htmlspecialchars(strip_tags($selectedEntry));
                 }
                 if (!empty($selectedEntry)) {
-                    if (!$this->isParent($selectedEntry)) {
+                    if (!$this->groupManagementService->isParent($selectedEntry, $this->options['parentsForm'])) {
                         $errorMsg = _t('GRPMNGT_ACTION_WRONG_ENTRYID', ['selectedEntryId' => $selectedEntry]);
                         $selectedEntry = "";
                     } else {
@@ -115,7 +114,7 @@ class GroupManagementAction extends YesWikiAction
                             $dragNDropOptions[$user['name']] = $user['name'];
                         }
                         if ($isAdmin) {
-                            $currentEntry = $this->parents[$selectedEntry] ?? [];
+                            $currentEntry = $this->groupManagementService->getParent($this->options['parentsForm'], $selectedEntry);
                             if (!empty($currentEntry['owner'])) {
                                 $currentEntryOwner = $this->userManager->getOneByName($currentEntry['owner']);
                                 if (!empty($currentEntryOwner) && !in_array($currentEntry['owner'], $dragNDropOptions)) {
@@ -138,7 +137,7 @@ class GroupManagementAction extends YesWikiAction
             'selectentrylabel' => $this->arguments['selectentrylabel'],
             'noentrylabel' => $this->arguments['noentrylabel'],
             'entriesWhereAdmin' => !empty($parentsWhereAdmin) ? array_map(function ($entryId) {
-                $entry = $this->parents[$entryId] ?? [];
+                $entry = $this->groupManagementService->getParent($this->options['parentsForm'], $entryId);
                 return $entry['bf_titre'] ?? $entryId;
             }, array_combine($parentsWhereAdmin, $parentsWhereAdmin)) : [],
             'selectedEntry' => $selectedEntry ?? "",
@@ -295,102 +294,6 @@ class GroupManagementAction extends YesWikiAction
             return substr($group, -strlen($suffix)) == $suffix;
         });
         return $this->groupsWithSuffix;
-    }
-
-    private function getParentsWhereOwner(array $user): array
-    {
-        $entries = $this->entryManager->search([
-            'formsIds' => [$this->options['parentsForm']],
-            'user' => $user['name'],
-        ]+$this->getAuthorizedParentsOptions(), true, true);
-        return empty($entries) ? [] : array_values(array_map(function ($entry) {
-            return $entry['id_fiche'];
-        }, $entries));
-    }
-
-    private function getParentsWhereAdmin(array $parentsWhereOwner, array $user): array
-    {
-        $parentsWhereAdmin = $parentsWhereOwner;
-
-        $groupsWherePresent = array_filter($this->groupsWithSuffix, function ($groupName) use ($user) {
-            return $this->wiki->UserIsInGroup($groupName, $user['name'], false);
-        });
-
-        $associatedEntries = array_filter(array_map(function ($groupName) {
-            return substr($groupName, 0, -strlen($this->options['groupSuffix']));
-        }, $groupsWherePresent), function ($entryId) {
-            return $this->isParent($entryId);
-        });
-        foreach ($associatedEntries as $entryId) {
-            if (!in_array($entryId, $parentsWhereAdmin)) {
-                $parentsWhereAdmin[] = $entryId;
-            }
-        }
-        return $parentsWhereAdmin;
-    }
-
-    private function isParent(string $tag): bool
-    {
-        if (!empty($this->parents[$tag])) {
-            return true;
-        }
-        if (!$this->entryManager->isEntry($tag)) {
-            return false;
-        }
-        $entry = $this->entryManager->getOne($tag);
-        if (empty($entry) || empty($entry['id_typeannonce'])) {
-            return false;
-        }
-        if (strval($entry['id_typeannonce']) != strval($this->options['parentsForm'])) {
-            return false;
-        }
-        $this->parents[$tag] = $entry;
-        return true;
-    }
-
-    private function getAuthorizedParents(): array
-    {
-        if (is_null($this->authorizedParents)) {
-            $this->authorizedParents = [];
-            $config = $this->params->get('groupmanagement');
-            if (!empty($config['authorizedParents']) && is_string($config['authorizedParents'])) {
-                $this->authorizedParents = $config['authorizedParents'] == "*"
-                    ? ['*']
-                    : array_filter(array_map('trim', explode(',', $config['authorizedParents'])));
-            }
-        }
-        return $this->authorizedParents;
-    }
-
-    private function getAuthorizedParentsOptions(): array
-    {
-        $authorizedParents = $this->getAuthorizedParents();
-        $otherOptions = [];
-        if (!empty($authorizedParents) && $authorizedParents[0] != "*") {
-            $otherOptions['queries'] = [
-                'id_fiche' => implode(',', $authorizedParents)
-            ];
-        }
-        return $otherOptions;
-    }
-
-    private function getAllParents(): array
-    {
-        $entries = $this->entryManager->search([
-            'formsIds' => [$this->options['parentsForm']],
-        ]+$this->getAuthorizedParentsOptions(), false, false);
-        return empty($entries) ? [] : $entries;
-    }
-
-    private function getParentsIds(): array
-    {
-        $this->parents = [];
-        foreach ($this->getAllParents() as $entry) {
-            if (!empty($entry['id_fiche'])) {
-                $this->parents[$entry['id_fiche']] = $entry;
-            }
-        }
-        return array_keys($this->parents);
     }
 
     private function getAccountsWithEntriesLinkedToSelectedEntry(string $selectedEntry): array

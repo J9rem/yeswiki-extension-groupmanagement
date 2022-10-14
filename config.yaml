@@ -14,6 +14,9 @@ services:
     autowire: true
     public: true
 
+  YesWiki\Groupmanagement\Service\:
+    resource: 'services/*'
+
   YesWiki\Groupmanagement\Service\ActionsBuilderService:
     decorates: YesWiki\Aceditor\Service\ActionsBuilderService
     decoration_on_invalid: null
