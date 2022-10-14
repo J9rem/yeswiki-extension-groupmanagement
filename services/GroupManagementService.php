@@ -14,6 +14,7 @@ namespace YesWiki\Groupmanagement\Service;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use YesWiki\Bazar\Service\EntryManager;
 use YesWiki\Core\Entity\User;
+use YesWiki\Core\Service\TripleStore;
 use YesWiki\Wiki;
 use YesWiki\Zfuture43\Entity\User as Zfuture43User;
 
@@ -21,16 +22,24 @@ class GroupManagementService
 {
     protected $entryManager;
     protected $params;
+    protected $tripleStore;
     protected $wiki;
     private $authorizedParents;
+    private $groupsWithSuffix ;
     private $parents;
 
-    public function __construct(EntryManager $entryManager, ParameterBagInterface $params, Wiki $wiki)
-    {
+    public function __construct(
+        EntryManager $entryManager,
+        ParameterBagInterface $params,
+        TripleStore $tripleStore,
+        Wiki $wiki
+    ) {
         $this->authorizedParents = null;
         $this->entryManager = $entryManager;
+        $this->groupsWithSuffix = null;
         $this->params = $params;
         $this->parents = [];
+        $this->tripleStore = $tripleStore;
         $this->wiki = $wiki;
     }
 
@@ -48,13 +57,30 @@ class GroupManagementService
             'formsIds' => [$formId],
             'user' => $user['name'],
         ]+$this->getAuthorizedParentsOptions(), true, true);
-        return empty($entries) ? [] : array_values(array_map(function ($entry) {
-            return $entry['id_fiche'];
-        }, $entries));
+        if (empty($entries)) {
+            return [];
+        } else {
+            if (!isset($this->parents[$formId])) {
+                $this->parents[$formId] = [];
+            }
+            $result = [];
+            foreach ($entries as $entry) {
+                $entryId = $entry['id_fiche'] ?? "";
+                if (!empty($entryId)) {
+                    $result[] = $entryId;
+                    $this->parents[$formId][$entryId] = $entry;
+                }
+            }
+            return $result;
+        }
     }
 
-    public function getParentsWhereAdmin(array $parentsWhereOwner, array $user, string $groupSuffix, string $parentsForm): array
-    {
+    public function getParentsWhereAdminIds(
+        array $parentsWhereOwner,
+        array $user,
+        string $groupSuffix,
+        string $parentsForm
+    ): array {
         if (empty($groupSuffix) ||
             empty($parentsForm) ||
             empty($user) ||
@@ -68,7 +94,9 @@ class GroupManagementService
 
         $parentsWhereAdmin = $parentsWhereOwner;
 
-        $groupsWherePresent = array_filter($this->groupsWithSuffix, function ($groupName) use ($user) {
+        $groupsWithSuffix = $this->getGroupsWithSuffix($groupSuffix);
+
+        $groupsWherePresent = array_filter($groupsWithSuffix, function ($groupName) use ($user) {
             return $this->wiki->UserIsInGroup($groupName, $user['name'], false);
         });
 
@@ -101,9 +129,9 @@ class GroupManagementService
 
     public function getParent(string $parentsForm, string $tag): ?array
     {
-        return (!isset($this->parents[$parentsForm]) || empty($this->parents[$parentsForm][$tag]))
-            ? []
-            : $this->parents[$parentsForm][$tag] ;
+        return $this->isParent($tag, $parentsForm)
+            ? $this->parents[$parentsForm][$tag]
+            : [] ;
     }
 
     private function getAuthorizedParents(): array
@@ -145,7 +173,7 @@ class GroupManagementService
         if (empty($tag) || empty($parentsForm) || strval($parentsForm) != strval(intval($parentsForm)) || intval($parentsForm) < 0) {
             return [];
         }
-        if (isset($this->parents[$parentsForm])) {
+        if (!isset($this->parents[$parentsForm])) {
             $this->parents[$parentsForm] = [];
         }
         if (!empty($this->parents[$parentsForm][$tag])) {
@@ -164,5 +192,30 @@ class GroupManagementService
         }
         $this->parents[$parentsForm][$tag] = $entry;
         return true;
+    }
+
+    private function getGroupsWithSuffix(string $suffix): array
+    {
+        if (empty($suffix)) {
+            return [];
+        }
+        if (is_null($this->groupsWithSuffix)) {
+            $this->groupsWithSuffix = [];
+        }
+        if (!isset($this->groupsWithSuffix[$suffix])) {
+            $res = $this->tripleStore->getMatching(
+                GROUP_PREFIX . "%$suffix",
+                WIKINI_VOC_ACLS_URI
+            );
+            $prefix_len = strlen(GROUP_PREFIX);
+            $groups = [];
+            foreach ($res as $line) {
+                $groups[] = substr($line['resource'], $prefix_len);
+            }
+            $this->groupsWithSuffix[$suffix] = array_filter($groups, function ($group) use ($suffix) {
+                return substr($group, -strlen($suffix)) == $suffix;
+            });
+        }
+        return $this->groupsWithSuffix[$suffix];
     }
 }

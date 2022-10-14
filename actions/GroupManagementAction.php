@@ -34,7 +34,6 @@ class GroupManagementAction extends YesWikiAction
     protected $groupManagementService;
     protected $tripleStore;
     protected $userManager;
-    private $groupsWithSuffix ;
     private $associatedFields ;
     private $options;
 
@@ -73,14 +72,18 @@ class GroupManagementAction extends YesWikiAction
         } elseif (!$optionsReady) {
             $errorMsg = _t('GRPMNGT_ACTION_NO_OPTIONS');
         } else {
-            $this->getGroupsWithSuffix();
             $parentsWhereOwner = $this->groupManagementService->getParentsWhereOwner($user, $this->options['parentsForm']);
             $parentsWhereAdmin =
                 $isAdmin
                 ? $this->groupManagementService->getParentsIds($this->options['parentsForm'])
                 : (
                     $this->options['allowedToWrite']
-                    ? $this->groupManagementService->getParentsWhereAdmin($parentsWhereOwner, $user, $this->options['groupSuffix'], $this->options['parentsForm'])
+                    ? $this->groupManagementService->getParentsWhereAdminIds(
+                        $parentsWhereOwner,
+                        $user,
+                        $this->options['groupSuffix'],
+                        $this->options['parentsForm']
+                    )
                     : $parentsWhereOwner
                 );
 
@@ -276,24 +279,6 @@ class GroupManagementAction extends YesWikiAction
         } else {
             return $this->tripleStore->create($tag, self::TRIPLE_PROPERTY, json_encode($options), "", "") == 0;
         }
-    }
-
-    private function getGroupsWithSuffix(): array
-    {
-        $suffix = $this->options['groupSuffix'];
-        $res = $this->tripleStore->getMatching(
-            GROUP_PREFIX . "%$suffix",
-            WIKINI_VOC_ACLS_URI
-        );
-        $prefix_len = strlen(GROUP_PREFIX);
-        $groups = [];
-        foreach ($res as $line) {
-            $groups[] = substr($line['resource'], $prefix_len);
-        }
-        $this->groupsWithSuffix = array_filter($groups, function ($group) use ($suffix) {
-            return substr($group, -strlen($suffix)) == $suffix;
-        });
-        return $this->groupsWithSuffix;
     }
 
     private function getAccountsWithEntriesLinkedToSelectedEntry(string $selectedEntry): array
