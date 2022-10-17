@@ -89,6 +89,9 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
             if (!empty($formsIds)) {
                 $ids = $this->getWritableEntriesIds($formsIds);
                 if (empty($ids)) {
+                    if (!isset($_GET['query'])) {
+                        $_GET['query'] = [];
+                    }
                     $_GET['query']['id_fiche']="";
                 } else {
                     $rawIds = !empty($_GET['query']['id_fiche']) ? explode(',', $_GET['query']['id_fiche']) : [];
@@ -101,6 +104,9 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
                                 $newIds[] = $id;
                             }
                         }
+                    }
+                    if (!isset($_GET['query'])) {
+                        $_GET['query'] = [];
                     }
                     $_GET['query']['id_fiche'] = implode(',', $newIds);
                 }
