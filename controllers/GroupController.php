@@ -211,7 +211,6 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
     public function registerSubscribers()
     {
         if (!class_exists(YesWikiEventCompilerPass::class, false)) {
-            echo "ok ";
             $containerBuilder = $this->wiki->services;
             if ($containerBuilder && $containerBuilder instanceof ContainerBuilder) {
                 if ($containerBuilder->has(CommentService::class)) {
