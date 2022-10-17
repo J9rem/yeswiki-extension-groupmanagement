@@ -13,6 +13,7 @@ namespace YesWiki\Groupmanagement\Controller;
 
 use Symfony\Component\Routing\Annotation\Route;
 use YesWiki\Bazar\Controller\ApiController as BazarApiController;
+use YesWiki\Core\Service\EventDispatcher;
 use YesWiki\Core\YesWikiController;
 use YesWiki\Groupmanagement\Controller\GroupController;
 
@@ -36,23 +37,8 @@ class ApiController extends YesWikiController
                     })
                 );
                 if (!empty($formsIds)) {
-                    $ids = $this->getService(GroupController::class)->getWritableEntriesIds($formsIds);
-                    if (empty($ids)) {
-                        $_GET['query']['id_fiche']="";
-                    } else {
-                        $rawIds = !empty($_GET['query']['id_fiche']) ? explode(',', $_GET['query']['id_fiche']) : [];
-                        if (empty($rawIds)) {
-                            $newIds = $ids;
-                        } else {
-                            $newIds = [];
-                            foreach ($rawIds as $id) {
-                                if (in_array($id, $ids)) {
-                                    $newIds[] = $id;
-                                }
-                            }
-                        }
-                        $_GET['query']['id_fiche'] = implode(',', $newIds);
-                    }
+                    $groupController = $this->getService(GroupController::class);
+                    $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.beforedynamicquery', compact(['formsIds']));
                 }
             }
         }

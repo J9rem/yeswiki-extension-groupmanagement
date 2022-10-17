@@ -38,7 +38,7 @@ class __BazarListeAction extends YesWikiAction
             return [
                 'keeponlyentrieswherecanedit' => $keepOnlyEntriesWhereCanEdit,
                 'template' => $newTemplate,
-                'previous-template' => $template,
+                'previous-template' => ($template != "groupmanagement_pre_template.tpl.html") ? $template : ($arg['previous-template'] ?? null),
             ];
         }
     }

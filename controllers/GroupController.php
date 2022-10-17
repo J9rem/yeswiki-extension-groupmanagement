@@ -60,9 +60,9 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
     {
         return [
             'groupmanagement.bazarliste.entriesready' => 'displayOnlyWritable',
+            'groupmanagement.bazarliste.beforedynamicquery' => 'keepOnlyWritable',
         ];
     }
-
     public function displayOnlyWritable($event)
     {
         $eventData = $event->getData();
@@ -77,6 +77,33 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
                     }
                 }
                 $eventData['dataContainer']->setData($bazarData);
+            }
+        }
+    }
+
+    public function keepOnlyWritable($event)
+    {
+        $eventData = $event->getData();
+        if (!empty($eventData) && is_array($eventData)) {
+            $formsIds = $eventData['formsIds'] ?? [];
+            if (!empty($formsIds)) {
+                $ids = $this->getWritableEntriesIds($formsIds);
+                if (empty($ids)) {
+                    $_GET['query']['id_fiche']="";
+                } else {
+                    $rawIds = !empty($_GET['query']['id_fiche']) ? explode(',', $_GET['query']['id_fiche']) : [];
+                    if (empty($rawIds)) {
+                        $newIds = $ids;
+                    } else {
+                        $newIds = [];
+                        foreach ($rawIds as $id) {
+                            if (in_array($id, $ids)) {
+                                $newIds[] = $id;
+                            }
+                        }
+                    }
+                    $_GET['query']['id_fiche'] = implode(',', $newIds);
+                }
             }
         }
     }
@@ -153,6 +180,7 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
     public function registerSubscribers()
     {
         if (!class_exists(YesWikiEventCompilerPass::class, false)) {
+            echo "ok ";
             $containerBuilder = $this->wiki->services;
             if ($containerBuilder && $containerBuilder instanceof ContainerBuilder) {
                 if ($containerBuilder->has(CommentService::class)) {
@@ -165,7 +193,7 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
         }
     }
 
-    public function getWritableEntriesIds(array $formsIds): array
+    protected function getWritableEntriesIds(array $formsIds): array
     {
         if (empty($formsIds)) {
             return [];
