@@ -28,6 +28,7 @@ class __BazarListeAction extends YesWikiAction
             $template = "calendar";
             $isDynamic = true;
         }
+        $isDynamic = $isDynamic || in_array($template, ['card','list']);
         if ($isDynamic || !$keepOnlyEntriesWhereCanEdit || $this->wiki->UserIsAdmin()) {
             return [
                 'keeponlyentrieswherecanedit' => (!$this->wiki->UserIsAdmin() && $isDynamic && $keepOnlyEntriesWhereCanEdit)

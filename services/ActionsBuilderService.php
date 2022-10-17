@@ -53,7 +53,7 @@ trait ActionsBuilderServiceCommon
             } else {
                 $this->data = $this->previousData;
             }
-            if (isset($this->dataa['action_groups']['bazarliste']['actions']['commons']['properties'])) {
+            if (isset($this->data['action_groups']['bazarliste']['actions']['commons']['properties'])) {
                 $this->data['action_groups']['bazarliste']['actions']['commons']['properties']['keeponlyentrieswherecanedit'] = [
                     'label' => _t('GRPMNGT_BAZARLISTE_PARAM_LABEL'),
                     'type' => "checkbox",
