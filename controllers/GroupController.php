@@ -15,7 +15,6 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use YesWiki\Comschange\Service\CommentService;
-use YesWiki\Core\Controller\AuthController;
 use YesWiki\Core\Service\AclService;
 use YesWiki\Core\Service\DbService;
 use YesWiki\Core\Service\TemplateEngine;
@@ -30,7 +29,6 @@ use YesWiki\Wiki;
 class GroupController extends YesWikiController implements EventSubscriberInterface
 {
     protected $aclService;
-    protected $authController;
     protected $dbService;
     protected $eventDispatcher;
     protected $groupManagementService;
@@ -40,7 +38,6 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
 
     public function __construct(
         AclService $aclService,
-        AuthController $authController,
         DbService $dbService,
         EventDispatcherInterface $eventDispatcher,
         GroupManagementService $groupManagementService,
@@ -50,7 +47,6 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
         Wiki $wiki
     ) {
         $this->aclService = $aclService;
-        $this->authController = $authController;
         $this->dbService = $dbService;
         $this->eventDispatcher = $eventDispatcher;
         $this->groupManagementService = $groupManagementService;
@@ -197,7 +193,7 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
         // needed ACL
         $neededACL = ['*'];
         // connected ?
-        $user = $this->authController->getLoggedUser();
+        $user = $this->userManager->getLoggedUser();
         if (!empty($user)) {
             $userName = $user['name'];
             $neededACL[] = '+';
