@@ -24,22 +24,19 @@ class ApiController extends YesWikiController
      */
     public function getBazarListData()
     {
-        $keepOnlyEntriesWhereCanEdit = in_array($_GET['keeponlyentrieswherecanedit'] ?? false, [1,true,"1","true"], true);
-        if ($keepOnlyEntriesWhereCanEdit) {
-            $formsIds = $_GET['idtypeannonce'] ?? [];
-            if (!empty($formsIds) && is_array($formsIds)) {
-                $formsIds = array_map(
-                    function ($id) {
-                        return strval($id);
-                    },
-                    array_filter($formsIds, function ($id) {
-                        return is_scalar($id) && strval($id) == strval(intval($id)) && intval($id) > 0;
-                    })
-                );
-                if (!empty($formsIds)) {
-                    $groupController = $this->getService(GroupController::class);
-                    $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.beforedynamicquery', compact(['formsIds']));
-                }
+        $formsIds = $_GET['idtypeannonce'] ?? [];
+        if (!empty($formsIds) && is_array($formsIds)) {
+            $formsIds = array_map(
+                function ($id) {
+                    return strval($id);
+                },
+                array_filter($formsIds, function ($id) {
+                    return is_scalar($id) && strval($id) == strval(intval($id)) && intval($id) > 0;
+                })
+            );
+            if (!empty($formsIds)) {
+                $groupController = $this->getService(GroupController::class);
+                $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.beforedynamicquery', compact(['formsIds']));
             }
         }
         return $this->getService(BazarApiController::class)->getBazarListData();
