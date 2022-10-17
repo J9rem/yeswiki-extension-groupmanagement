@@ -16,9 +16,25 @@ services:
 
   YesWiki\Groupmanagement\Service\:
     resource: 'services/*'
+    exclude:
+     - 'EventDispatcherInterface.php'
 
   YesWiki\Groupmanagement\Service\ActionsBuilderService:
     decorates: YesWiki\Aceditor\Service\ActionsBuilderService
     decoration_on_invalid: null
     arguments:
       $parentActionsBuilderService: '@.inner'
+
+  YesWiki\Groupmanagement\Service\EventDispatcher:
+    decorates: YesWiki\Core\Service\EventDispatcher
+    decoration_on_invalid: null
+  
+  # Allows to use controllers as services
+  YesWiki\Groupmanagement\Controller\:
+    resource: 'controllers/*'
+
+  YesWiki\Groupmanagement\Controller\GroupController:
+    tags:
+      - { name: yeswiki.event_subscriber }
+    calls: 
+      - registerSubscribers: []
