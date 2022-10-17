@@ -11,36 +11,27 @@
 
 namespace YesWiki\Groupmanagement;
 
-use YesWiki\Core\Service\TemplateEngine;
 use YesWiki\Core\YesWikiAction;
+use YesWiki\Groupmanagement\Controller\GroupController;
 
 class __BazarListeAction extends YesWikiAction
 {
     public function formatArguments($arg)
     {
         $keepOnlyEntriesWhereCanEdit = $this->formatBoolean($arg, false, 'keeponlyentrieswherecanedit');
-        $isDynamic = $this->formatBoolean($arg, false, 'dynamic');
-        $templateEngine = $this->getService(TemplateEngine::class);
-        $template = $_GET['template'] ?? $arg['template'] ?? null;
-        $template = is_string($template) ? $template : null;
-        if (($template === 'calendar.tpl.html' && !$templateEngine->hasTemplate("@bazar/{$template}")) ||
-            ($template === 'calendar' && !$templateEngine->hasTemplate("@bazar/{$template}.tpl.html"))) {
-            $template = "calendar";
-            $isDynamic = true;
-        }
-        $isDynamic = $isDynamic || in_array($template, ['card','list']);
-        if ($isDynamic || !$keepOnlyEntriesWhereCanEdit || $this->wiki->UserIsAdmin()) {
-            return [
-                'keeponlyentrieswherecanedit' => (!$this->wiki->UserIsAdmin() && $isDynamic && $keepOnlyEntriesWhereCanEdit)
-            ];
-        } else {
-            $newTemplate = in_array($template, ["map","map.tpl.html","gogocarto","gogocarto.tpl.html"]) ? $template : "groupmanagement_pre_template.tpl.html";
-            return [
-                'keeponlyentrieswherecanedit' => $keepOnlyEntriesWhereCanEdit,
-                'template' => $newTemplate,
-                'previous-template' => ($template != "groupmanagement_pre_template.tpl.html") ? $template : ($arg['previous-template'] ?? null),
-            ];
-        }
+        return $this->getService(GroupController::class)->defineBazarListeActionParams(
+            $arg,
+            $_GET ?? [],
+            function (bool $isDynamic, bool $isAdmin, array $_arg) use ($keepOnlyEntriesWhereCanEdit) {
+                $replaceTemplate = !$isDynamic && $keepOnlyEntriesWhereCanEdit && !$isAdmin;
+                $options = [
+                    'keeponlyentrieswherecanedit' => ($replaceTemplate
+                        ? true
+                        : (!$isAdmin && $isDynamic && $keepOnlyEntriesWhereCanEdit))
+                ];
+                return compact(['replaceTemplate','options']);
+            }
+        );
     }
 
     public function run()

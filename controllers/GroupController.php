@@ -108,6 +108,37 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
         }
     }
 
+    public function defineBazarListeActionParams(array $arg, array $get, $callable): array
+    {
+        $isDynamic = (
+            isset($arg['dynamic']) && (
+                (is_bool($arg['dynamic']) && $arg['dynamic']) ||
+                (!is_bool($arg['dynamic']) && !empty($arg['dynamic']) && !in_array($arg['dynamic'], [0,'0','no','non','false'], true))
+            )
+        );
+        $template = $get['template'] ?? $arg['template'] ?? null;
+        $template = is_string($template) ? $template : null;
+        if (($template === 'calendar.tpl.html' && !$this->templateEngine->hasTemplate("@bazar/{$template}")) ||
+            ($template === 'calendar' && !$this->templateEngine->hasTemplate("@bazar/{$template}.tpl.html"))) {
+            $template = "calendar";
+            $isDynamic = true;
+        }
+        $isDynamic = $isDynamic || in_array($template, ['card','list']);
+        list('replaceTemplate'=>$replaceTemplate, 'options'=>$options) = $callable($isDynamic, $this->wiki->UserIsAdmin(), $arg);
+        if (!is_array($options)) {
+            $options = [];
+        }
+        if ($replaceTemplate) {
+            $newTemplate = in_array($template, ["map","map.tpl.html","gogocarto","gogocarto.tpl.html"]) ? $template : "groupmanagement_pre_template.tpl.html";
+            return [
+                'template' => $newTemplate,
+                'previous-template' => ($template != "groupmanagement_pre_template.tpl.html") ? $template : ($arg['previous-template'] ?? null),
+            ]+$options;
+        } else {
+            return $options;
+        }
+    }
+
     public function renderTemplate(array $data, string $file = "", array $bazarPaths = []): string
     {
         if (!isset($data['param'])) {
