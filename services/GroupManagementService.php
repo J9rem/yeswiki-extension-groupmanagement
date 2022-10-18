@@ -102,7 +102,7 @@ class GroupManagementService
 
         $associatedEntries = array_filter(array_map(function ($groupName) {
             return substr($groupName, 0, -strlen($groupSuffix));
-        }, $groupsWherePresent), function ($entryId) {
+        }, $groupsWherePresent), function ($entryId) use ($parentsForm) {
             return $this->isParent($entryId, $parentsForm);
         });
         foreach ($associatedEntries as $entryId) {
