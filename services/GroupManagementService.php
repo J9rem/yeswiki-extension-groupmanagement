@@ -47,7 +47,7 @@ class GroupManagementService
     {
         if (empty($formId) ||
             !is_scalar($formId) ||
-            !(strval($formId) != strval(intval($formId))) ||
+            (strval($formId) != strval(intval($formId))) ||
             empty($user) ||
             !(is_array($user) || $user instanceof User || $user instanceof Zfuture43User)||
             empty($user['name'])) {
@@ -87,7 +87,7 @@ class GroupManagementService
             !(is_array($user) || $user instanceof User || $user instanceof Zfuture43User) ||
             empty($user['name']) ||
             count(array_filter($parentsWhereOwner, function ($item) {
-                return is_string($item);
+                return !is_string($item);
             }))>0) {
             return [];
         }
