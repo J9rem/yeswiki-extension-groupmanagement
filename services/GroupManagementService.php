@@ -100,7 +100,7 @@ class GroupManagementService
             return $this->wiki->UserIsInGroup($groupName, $user['name'], false);
         });
 
-        $associatedEntries = array_filter(array_map(function ($groupName) {
+        $associatedEntries = array_filter(array_map(function ($groupName) use($groupSuffix) {
             return substr($groupName, 0, -strlen($groupSuffix));
         }, $groupsWherePresent), function ($entryId) use ($parentsForm) {
             return $this->isParent($entryId, $parentsForm);
