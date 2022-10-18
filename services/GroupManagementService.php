@@ -171,7 +171,7 @@ class GroupManagementService
     public function isParent(string $tag, string $parentsForm): bool
     {
         if (empty($tag) || empty($parentsForm) || strval($parentsForm) != strval(intval($parentsForm)) || intval($parentsForm) < 0) {
-            return [];
+            return false;
         }
         if (!isset($this->parents[$parentsForm])) {
             $this->parents[$parentsForm] = [];
