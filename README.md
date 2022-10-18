@@ -18,6 +18,8 @@ Extension [YesWiki](https://yeswiki.net/) to make easier the management of admin
 In page `GererMisesAJour` on your YesWiki website, search extension `groupmanagement` and install it.
 You may have to install the extension [`alternativeupdatej9rem`](https://github.com/J9rem/yeswiki-extension-alternativeupdatej9rem) by copiyng the folder `alternativeupdatej9rem` from [this archive](https://repository.oui-wiki.pro/doryphore/extension-alternativeupdatej9rem-latest.zip) into the folder `tools` on your website.
 
+This extension requires extension `comschange` to manage write acl check when using `bazarliste`.
+
 #### Use Cases
 
 This extension allows you to transfer the right to certain accounts to define groups, without being an administrator of the site.
@@ -79,6 +81,8 @@ Extension [YesWiki](https://yeswiki.net/) pour mettre faciliter la gestion des d
 
 Dans la page `GererMisesAJour` de votre YesWiki, recherchez l'extension `groupmanagement` et installez-là.
 Vous pourriez avoir besoin d'installer l'extension [`alternativeupdatej9rem`](https://github.com/J9rem/yeswiki-extension-alternativeupdatej9rem) en copiant le dossier `alternativeupdatej9rem` depuis [l'archive](https://repository.oui-wiki.pro/doryphore/extension-alternativeupdatej9rem-latest.zip) dans le dossier `tools` sur votre site.
+
+Cette extension a besoin de l'extension `comschange` pour pouvoir vérifier les droits deécriture en utilisant `bazarliste`.
 
 ### Utilisation
 
