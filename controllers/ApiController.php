@@ -34,15 +34,13 @@ class ApiController extends YesWikiController
                     return is_scalar($id) && strval($id) == strval(intval($id)) && intval($id) > 0;
                 })
             );
-            if (!empty($formsIds)) {
-                $groupController = $this->getService(GroupController::class);
-                $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.beforedynamicquery', compact(['formsIds']));
-            }
+        } else {
+            $formsIds = [];
         }
+        $groupController = $this->getService(GroupController::class);
+        $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.beforedynamicquery', compact(['formsIds']));
         $response = $this->getService(BazarApiController::class)->getBazarListData();
-        if (!empty($formsIds) && is_array($formsIds)) {
-            $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.afterdynamicquery', compact(['response']));
-        }
+        $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.afterdynamicquery', compact(['response']));
         return $response;
     }
 }
