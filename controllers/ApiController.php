@@ -39,6 +39,10 @@ class ApiController extends YesWikiController
                 $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.beforedynamicquery', compact(['formsIds']));
             }
         }
-        return $this->getService(BazarApiController::class)->getBazarListData();
+        $response = $this->getService(BazarApiController::class)->getBazarListData();
+        if (!empty($formsIds) && is_array($formsIds)) {
+            $this->getService(EventDispatcher::class)->yesWikiDispatch('groupmanagement.bazarliste.afterdynamicquery', compact(['response']));
+        }
+        return $response;
     }
 }

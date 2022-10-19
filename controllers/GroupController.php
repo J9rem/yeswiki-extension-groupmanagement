@@ -60,7 +60,8 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
     {
         return [
             'groupmanagement.bazarliste.entriesready' => 'displayOnlyWritable',
-            'groupmanagement.bazarliste.beforedynamicquery' => 'keepOnlyWritable',
+            // 'groupmanagement.bazarliste.beforedynamicquery' => 'keepOnlyWritable',
+            'groupmanagement.bazarliste.afterdynamicquery' => 'keepOnlyWritableIntoResponse',
         ];
     }
     public function displayOnlyWritable($event)
@@ -112,6 +113,39 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
                                 $_GET['query'] = [];
                             }
                             $_GET['query']['id_fiche'] = implode(',', $newIds);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public function keepOnlyWritableIntoResponse($event)
+    {
+        if (!$this->wiki->UserIsAdmin()) {
+            $keepOnlyEntriesWhereCanEdit = in_array($_GET['keeponlyentrieswherecanedit'] ?? false, [1,true,"1","true"], true);
+            if ($keepOnlyEntriesWhereCanEdit) {
+                $eventData = $event->getData();
+                if (!empty($eventData) &&
+                    is_array($eventData) &&
+                    isset($eventData['response']) &&
+                    method_exists($eventData['response'], 'getContent')) {
+                    $response = $eventData['response'];
+                    $status = $response->getStatusCode();
+                    if ($status < 400) {
+                        $content = $response->getContent();
+                        $contentDecoded = json_decode($content, true);
+                        if (!empty($contentDecoded) && !empty($contentDecoded['entries'])) {
+                            $fieldMapping = $contentDecoded['fieldMapping'] ?? [];
+                            $idFicheIdx = array_search("id_fiche", $fieldMapping);
+                            if ($idFicheIdx !== false && $idFicheIdx > -1) {
+                                foreach ($contentDecoded['entries'] as $idx => $entry) {
+                                    if (empty($entry[$idFicheIdx]) || !$this->aclService->hasAccess('write', $entry[$idFicheIdx])) {
+                                        unset($contentDecoded['entries'][$idx]);
+                                    }
+                                }
+                                $response->setData($contentDecoded);
+                            }
                         }
                     }
                 }
