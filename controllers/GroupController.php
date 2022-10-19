@@ -83,34 +83,36 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
 
     public function keepOnlyWritable($event)
     {
-        $keepOnlyEntriesWhereCanEdit = in_array($_GET['keeponlyentrieswherecanedit'] ?? false, [1,true,"1","true"], true);
-        if ($keepOnlyEntriesWhereCanEdit) {
-            $eventData = $event->getData();
-            if (!empty($eventData) && is_array($eventData)) {
-                $formsIds = $eventData['formsIds'] ?? [];
-                if (!empty($formsIds)) {
-                    $ids = $this->getWritableEntriesIds($formsIds);
-                    if (empty($ids)) {
-                        if (!isset($_GET['query'])) {
-                            $_GET['query'] = [];
-                        }
-                        $_GET['query']['id_fiche']="";
-                    } else {
-                        $rawIds = !empty($_GET['query']['id_fiche']) ? explode(',', $_GET['query']['id_fiche']) : [];
-                        if (empty($rawIds)) {
-                            $newIds = $ids;
+        if (!$this->wiki->UserIsAdmin()) {
+            $keepOnlyEntriesWhereCanEdit = in_array($_GET['keeponlyentrieswherecanedit'] ?? false, [1,true,"1","true"], true);
+            if ($keepOnlyEntriesWhereCanEdit) {
+                $eventData = $event->getData();
+                if (!empty($eventData) && is_array($eventData)) {
+                    $formsIds = $eventData['formsIds'] ?? [];
+                    if (!empty($formsIds)) {
+                        $ids = $this->getWritableEntriesIds($formsIds);
+                        if (empty($ids)) {
+                            if (!isset($_GET['query'])) {
+                                $_GET['query'] = [];
+                            }
+                            $_GET['query']['id_fiche']="";
                         } else {
-                            $newIds = [];
-                            foreach ($rawIds as $id) {
-                                if (in_array($id, $ids)) {
-                                    $newIds[] = $id;
+                            $rawIds = !empty($_GET['query']['id_fiche']) ? explode(',', $_GET['query']['id_fiche']) : [];
+                            if (empty($rawIds)) {
+                                $newIds = $ids;
+                            } else {
+                                $newIds = [];
+                                foreach ($rawIds as $id) {
+                                    if (in_array($id, $ids)) {
+                                        $newIds[] = $id;
+                                    }
                                 }
                             }
+                            if (!isset($_GET['query'])) {
+                                $_GET['query'] = [];
+                            }
+                            $_GET['query']['id_fiche'] = implode(',', $newIds);
                         }
-                        if (!isset($_GET['query'])) {
-                            $_GET['query'] = [];
-                        }
-                        $_GET['query']['id_fiche'] = implode(',', $newIds);
                     }
                 }
             }
