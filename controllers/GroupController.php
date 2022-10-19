@@ -89,9 +89,9 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
                             $fieldMapping = $contentDecoded['fieldMapping'] ?? [];
                             $idFicheIdx = array_search("id_fiche", $fieldMapping);
                             if ($idFicheIdx !== false && $idFicheIdx > -1) {
-                                $contentDecoded['entries'] = array_filter($contentDecoded['entries'], function ($entry) use ($idFicheIdx) {
+                                $contentDecoded['entries'] = array_values(array_filter($contentDecoded['entries'], function ($entry) use ($idFicheIdx) {
                                     return !empty($entry[$idFicheIdx]) && $this->aclService->hasAccess('write', $entry[$idFicheIdx]);
-                                });
+                                }));
                                 $response->setData($contentDecoded);
                             }
                         }
