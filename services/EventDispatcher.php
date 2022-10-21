@@ -25,63 +25,70 @@ if (file_exists('includes/services/EventDispatcher.php')) {
     include_once 'tools/comschange/services/EventDispatcher.php';
 }
 
+trait EventDispatcherCommon
+{
+    protected $parentEventDispatcher;
+
+    public function yesWikiDispatch(string $eventName, array $data = []): array
+    {
+        return $this->parentEventDispatcher->yesWikiDispatch($eventName, $data);
+    }
+
+    public function getListeners(string $eventName = null)
+    {
+        return $this->parentEventDispatcher->getListeners($eventName);
+    }
+
+    public function dispatch(object $event, string $eventName = null): object
+    {
+        return $this->parentEventDispatcher->dispatch($event, $eventName);
+    }
+
+    public function getListenerPriority(string $eventName, $listener)
+    {
+        return $this->parentEventDispatcher->getListenerPriority($eventName, $listener);
+    }
+
+    public function hasListeners(string $eventName = null)
+    {
+        return $this->parentEventDispatcher->hasListeners($eventName);
+    }
+
+    public function addListener(string $eventName, $listener, int $priority = 0)
+    {
+        return $this->parentEventDispatcher->addListener($eventName, $listener, $priority);
+    }
+    public function removeListener(string $eventName, $listener)
+    {
+        return $this->parentEventDispatcher->addListener($eventName, $listener);
+    }
+}
 if (class_exists(CoreEventDispatcher::class, false)) {
     class EventDispatcher extends CoreEventDispatcher implements EventDispatcherInterface
     {
-        public function __construct(Wiki $wiki)
+        use EventDispatcherCommon;
+
+        public function __construct(Wiki $wiki, CoreEventDispatcher $coreEventDispatcher)
         {
+            $this->parentEventDispatcher = $coreEventDispatcher;
             $this->wiki = $wiki;
         }
     }
 } elseif (class_exists(ComschangeEventDispatcher::class, false)) {
     class EventDispatcher extends ComschangeEventDispatcher implements EventDispatcherInterface
     {
-        protected $comsChangeEventDispatcher;
+        use EventDispatcherCommon;
 
-        public function __construct(Wiki $wiki, ComschangeEventDispatcher $comsChangeEventDispatcher)
+        public function __construct(Wiki $wiki, ComschangeEventDispatcher $comsChangeEventDispatcher, $coreEventDispatcher)
         {
-            $this->comsChangeEventDispatcher = $comsChangeEventDispatcher;
+            $this->parentEventDispatcher = $comsChangeEventDispatcher;
             $this->wiki = $wiki;
-        }
-
-        public function yesWikiDispatch(string $eventName, array $data = []): array
-        {
-            return $this->comsChangeEventDispatcher->yesWikiDispatch($eventName, $data);
-        }
-
-        public function getListeners(string $eventName = null)
-        {
-            return $this->comsChangeEventDispatcher->getListeners($eventName);
-        }
-
-        public function dispatch(object $event, string $eventName = null): object
-        {
-            return $this->comsChangeEventDispatcher->dispatch($event, $eventName);
-        }
-
-        public function getListenerPriority(string $eventName, $listener)
-        {
-            return $this->comsChangeEventDispatcher->getListenerPriority($eventName, $listener);
-        }
-
-        public function hasListeners(string $eventName = null)
-        {
-            return $this->comsChangeEventDispatcher->hasListeners($eventName);
-        }
-
-        public function addListener(string $eventName, $listener, int $priority = 0)
-        {
-            return $this->comsChangeEventDispatcher->addListener($eventName, $listener, $priority);
-        }
-        public function removeListener(string $eventName, $listener)
-        {
-            return $this->comsChangeEventDispatcher->addListener($eventName, $listener);
         }
     }
 } else {
     class EventDispatcher implements EventDispatcherInterface
     {
-        public function __construct(Wiki $wiki)
+        public function __construct(Wiki $wiki, $coreEventDispatcher)
         {
         }
 

@@ -28,6 +28,8 @@ services:
   YesWiki\Groupmanagement\Service\EventDispatcher:
     decorates: YesWiki\Core\Service\EventDispatcher
     decoration_on_invalid: null
+    arguments:
+      $coreEventDispatcher: '@.inner'
   
   # Allows to use controllers as services
   YesWiki\Groupmanagement\Controller\:
