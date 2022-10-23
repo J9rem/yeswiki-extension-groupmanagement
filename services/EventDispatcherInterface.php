@@ -11,7 +11,9 @@
 
 namespace YesWiki\Groupmanagement\Service;
 
-interface EventDispatcherInterface
+use Symfony\Component\EventDispatcher\EventDispatcherInterface as SymfonyEventDispatcherInterface;
+
+interface EventDispatcherInterface extends SymfonyEventDispatcherInterface
 {
     public function yesWikiDispatch(string $eventName, array $data = []): array;
 }
