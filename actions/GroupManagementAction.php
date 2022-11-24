@@ -133,16 +133,21 @@ class GroupManagementAction extends YesWikiAction
             }
         }
 
+        $entriesWhereAdmin = !empty($parentsWhereAdmin) ? array_map(function ($entryId) {
+            $entry = $this->groupManagementService->getParent($this->options['parentsForm'], $entryId);
+            return $entry['bf_titre'] ?? $entryId;
+        }, array_combine($parentsWhereAdmin, $parentsWhereAdmin)) : [];
+
+        // sort on value
+        asort($entriesWhereAdmin, SORT_NATURAL | SORT_FLAG_CASE);
+
         return $this->render("@groupmanagement/actions/groupmanagement.twig", [
             'isAdmin' => $isAdmin,
             'errorMsg' => $errorMsg,
             'title' => $this->arguments['title'],
             'selectentrylabel' => $this->arguments['selectentrylabel'],
             'noentrylabel' => $this->arguments['noentrylabel'],
-            'entriesWhereAdmin' => !empty($parentsWhereAdmin) ? array_map(function ($entryId) {
-                $entry = $this->groupManagementService->getParent($this->options['parentsForm'], $entryId);
-                return $entry['bf_titre'] ?? $entryId;
-            }, array_combine($parentsWhereAdmin, $parentsWhereAdmin)) : [],
+            'entriesWhereAdmin' => $entriesWhereAdmin,
             'selectedEntry' => $selectedEntry ?? "",
             'dragNDropOptions' => $dragNDropOptions ?? [],
             'dragNDropOptionsData' => $accountsWithEntriesLinkedToSelectedOneWithData ?? [],
