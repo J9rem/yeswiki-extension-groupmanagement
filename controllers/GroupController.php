@@ -17,7 +17,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use YesWiki\Comschange\Service\CommentService;
 use YesWiki\Core\Service\AclService;
 use YesWiki\Core\Service\TemplateEngine;
-use YesWiki\Core\Service\YesWikiEventCompilerPass;
+use YesWiki\Core\YesWikiEventCompilerPass;
 use YesWiki\Core\YesWikiController;
 use YesWiki\Groupmanagement\Entity\DataContainer;
 use YesWiki\Groupmanagement\Service\EventDispatcherInterface;
