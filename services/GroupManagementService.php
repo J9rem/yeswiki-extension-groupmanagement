@@ -333,7 +333,7 @@ class GroupManagementService
             $parentsWhereOwner,
             ['name'=>$loggedUserName],
             $suffix,
-            $id
+            $formId
         );
 
         return array_filter(array_map(function ($entryId) use ($formId) {
