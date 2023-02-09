@@ -195,7 +195,12 @@ class GroupController extends YesWikiController implements EventSubscriberInterf
         $this->eventDispatcher->yesWikiDispatch('groupmanagement.bazarliste.entriesready', compact(['dataContainer']));
         $data = $dataContainer->getData();
         try {
-            return $this->render($templatePath, $data);
+            return empty($data['fiches'])
+                ? $this->render('@templates/alert-message.twig',[
+                    'type' => 'info',
+                    'message' => _t('BAZ_IL_Y_A').' 0 '. _t('BAZ_FICHE')
+                ])
+                : $this->render($templatePath, $data);
         } catch (TemplateNotFound $e) {
             return '<div class="alert alert-danger">'.$e->getMessage().'</div>';
         }
