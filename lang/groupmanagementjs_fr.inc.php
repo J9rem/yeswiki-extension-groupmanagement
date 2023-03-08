@@ -18,5 +18,8 @@ return [
     'GRPMNGT_ACLSELECT_PUBLIC' => 'publique',
     'GRPMNGT_ACLSELECT_LIMITED_TO_MEMBERS' => 'limitée aux membres',
     'GRPMNGT_ACLSELECT_LINKFIELD_LABEL' => 'Champ pour les fiches liées',
+    'GRPMNGT_AUTOREGISTERGROUP_LABEL' => 'Ajout automatique au groupe des admins',
+    'GRPMNGT_AUTOREGISTERGROUP_PAGEFOROPTIONS_LABEL' => 'Nom de la page avec les options',
+    'GRPMNGT_AUTOREGISTERGROUP_PAGEFOROPTIONS_PLACEHOLDER' => 'Indiquer le nom de la page avec les options',
     
 ];

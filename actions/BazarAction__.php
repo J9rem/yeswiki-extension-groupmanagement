@@ -25,6 +25,7 @@ class BazarAction__ extends YesWikiAction
             ) {
             $this->wiki->AddJavascriptFile('tools/groupmanagement/javascripts/autoregisterlinkedentry/form-edit-template.js');
             $this->wiki->AddJavascriptFile('tools/groupmanagement/javascripts/aclselectfield/form-edit-template.js');
+            $this->wiki->AddJavascriptFile('tools/groupmanagement/javascripts/autoregistergroup/form-edit-template.js');
         }
     }
 }
