@@ -27,7 +27,9 @@ use YesWiki\Core\Service\UserManager;
  */
 class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
 {
-    protected $linkedFieldName;
+    protected $linkedFieldsNames;
+    protected const FIELD_FIELDS_NAMES = 7;
+
     public function __construct(array $values, ContainerInterface $services)
     {
         parent::__construct($values, $services);
@@ -35,7 +37,7 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
         $this->options = [
             'oui' => _t('YES'),
         ];
-        $this->linkedFieldName = trim($this->listLabel);
+        $this->linkedFieldsNames = array_filter(array_map('trim',explode(',',$values[self::FIELD_FIELDS_NAMES] ?? '')));
         $this->name = trim($this->name);
     }
 
@@ -56,16 +58,23 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
         return null;
     }
 
-    public function formatValuesBeforeSave($entry)
+    public function formatValuesBeforeSaveIfEditable($entry, bool $isCreation = false)
     {
-        $user = $this->getService(UserManager::class)->getLoggedUser();
-        if (!empty($user)) {
-            $data = parent::formatValuesBeforeSave($entry);
-            $value = $data[$this->propertyName];
-            if ($value == "oui") {
-                $this->registerUser($user, $entry);
+        if ($isCreation){
+            $user = $this->getService(UserManager::class)->getLoggedUser();
+            if (!empty($user)) {
+                $data = parent::formatValuesBeforeSaveIfEditable($entry, $isCreation);
+                $value = $data[$this->propertyName];
+                if ($value == "oui") {
+                    $this->registerUser($user, $entry);
+                }
             }
         }
+        return $this->formatValuesBeforeSave($entry);
+    }
+
+    public function formatValuesBeforeSave($entry)
+    {
         return [
             'fields-to-remove' => [
                 $this->propertyName . self::FROM_FORM_ID,
@@ -73,9 +82,9 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                 ]];
     }
 
-    public function getLinkedFieldName()
+    public function getLinkedFieldsNames()
     {
-        return $this->linkedFieldName;
+        return $this->linkedFieldsNames;
     }
 
     // change return of this method to keep compatible with php 7.3 (mixed is not managed)
@@ -87,7 +96,7 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
             [
                 'name' => '',
                 'propertyname' => '',
-                'linkedFieldName' => $this->getLinkedFieldName()
+                'linkedFieldsNames' => $this->getLinkedFieldsNames()
             ]
         );
         unset($array['options']);
@@ -115,32 +124,35 @@ class AutoRegisterLinkedEntryAtCreationField extends CheckboxField
                     ])
                 ]), 'error');
             } else {
-                $fieldName = $this->getLinkedFieldName();
-                if (!empty($fieldName)) {
-                    $field = $formManager->findFieldFromNameOrPropertyName($fieldName, $form['bn_id_nature']);
-                    if (!empty($field) && (
-                        $field instanceof RadioEntryField ||
-                        $field instanceof SelectEntryField ||
-                        $field instanceof CheckboxEntryField
-                    )) {
-                        if (trim($field->getLinkedObjectName()) == $entry['id_typeannonce']) {
-                            $fields = [$field];
+                $fieldsNames = $this->getLinkedFieldsNames();
+                if (!empty($fieldsNames)) {
+                    $fields = [];
+                    foreach($fieldsNames as $fieldName){
+                        $field = $formManager->findFieldFromNameOrPropertyName($fieldName, $form['bn_id_nature']);
+                        if (!empty($field) && (
+                            $field instanceof RadioEntryField ||
+                            $field instanceof SelectEntryField ||
+                            $field instanceof CheckboxEntryField
+                        )) {
+                            if (trim($field->getLinkedObjectName()) == $entry['id_typeannonce']) {
+                                $fields[] = $field;
+                            } else {
+                                flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
+                                    'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_FIELDTYPE', [
+                                        'formId' => $this->name,
+                                        'fieldName' => $fieldName,
+                                        'currentFormId' => $entry['id_typeannonce']
+                                    ])
+                                ]), 'error');
+                            }
                         } else {
                             flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                                'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_FIELDTYPE', [
+                                'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_THIS_FIELDNAME', [
                                     'formId' => $this->name,
-                                    'fieldName' => $fieldName,
-                                    'currentFormId' => $entry['id_typeannonce']
+                                    'fieldName' => $fieldName
                                 ])
                             ]), 'error');
                         }
-                    } else {
-                        flash(_t('GRPMNGT_AUTOREGISTERLINKEDENTRY_ERROR_MSG', [
-                            'errorOrigin' => _t('GRPMNGT_AUTOREGISTERLINKEDENTRY_NO_THIS_FIELDNAME', [
-                                'formId' => $this->name,
-                                'fieldName' => $fieldName
-                            ])
-                        ]), 'error');
                     }
                 } else {
                     $fields = [];

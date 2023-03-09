@@ -23,7 +23,8 @@ typeUserAttrs = {
         },
         linkedFieldName: {
           label: "Nom du champ lié",
-          value: ""
+          value: "",
+          placeholder: "Si plusieurs, les séparer par des virgules"
         },
         defaultValue: {
           label: _t('BAZ_FORM_EDIT_SELECT_DEFAULT'),
@@ -61,8 +62,8 @@ yesWikiMapping = {
     "autoregisterlinkedentry": {
       ...lists,
       ...{
-        6: "linkedFieldName",
-        7: "",
+        6: "",
+        7: "linkedFieldName",
         8: "",
         9: "",
       }
