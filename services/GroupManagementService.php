@@ -113,17 +113,22 @@ class GroupManagementService
 
         $parentsWhereAdmin = $parentsWhereOwner;
 
-        $groupsWithSuffix = $this->getGroupsWithSuffix($groupSuffix);
+        if ($this->wiki->UserIsAdmin($user['name'])){
+            $associatedEntries = $this->getParentsIds($parentsForm);
+        } else {
 
-        $groupsWherePresent = array_filter($groupsWithSuffix, function ($groupName) use ($user) {
-            return $this->wiki->UserIsInGroup($groupName, $user['name'], false);
-        });
-
-        $associatedEntries = array_filter(array_map(function ($groupName) use ($groupSuffix) {
-            return substr($groupName, 0, -strlen($groupSuffix));
-        }, $groupsWherePresent), function ($entryId) use ($parentsForm) {
-            return $this->isParent($entryId, $parentsForm);
-        });
+            $groupsWithSuffix = $this->getGroupsWithSuffix($groupSuffix);
+    
+            $groupsWherePresent = array_filter($groupsWithSuffix, function ($groupName) use ($user) {
+                return $this->wiki->UserIsInGroup($groupName, $user['name'], false);
+            });
+    
+            $associatedEntries = array_filter(array_map(function ($groupName) use ($groupSuffix) {
+                return substr($groupName, 0, -strlen($groupSuffix));
+            }, $groupsWherePresent), function ($entryId) use ($parentsForm) {
+                return $this->isParent($entryId, $parentsForm);
+            });
+        }
         foreach ($associatedEntries as $entryId) {
             if (!in_array($entryId, $parentsWhereAdmin)) {
                 $parentsWhereAdmin[] = $entryId;
