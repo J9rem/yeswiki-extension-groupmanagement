@@ -312,11 +312,11 @@ class GroupManagementService
 
     private function isParentAdmin(string $entryId, string $suffix, string $loggedUserName, string $parentsForm): bool
     {
-        if (!$this->isParent($entryId, $parentsForm) ||
+        if ($this->wiki->UserIsAdmin($loggedUserName)) {
+            return true;
+        } elseif (!$this->isParent($entryId, $parentsForm) ||
             !$this->aclService->hasAccess('read', $entryId, $loggedUserName)) {
             return false;
-        } elseif ($this->wiki->UserIsAdmin($loggedUserName)) {
-            return true;
         } else {
             $parentOwner = $this->pageManager->getOwner($entryId);
             $groupName = "{$entryId}$suffix";
@@ -352,7 +352,7 @@ class GroupManagementService
      * @param string $keyIntoAppendData
      * @param callable $callbackForAppendData function (array $entry, array $form, string $suffix, $user)
      * @param callable $extraCallback function (array $entry, array &$results, array $formData, $user)
-     * @return array ['form'=>array,'enumEntryFields'=>array,...]
+     * @return array $entries
      */
     public function filterEntriesFromParents(
         array $entries,
