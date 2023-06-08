@@ -27,7 +27,7 @@ var registerFieldGroupmanagement = function(field){
     }
   }
   if ('disabledAttributes' in field){
-    window.typeUserDisabledAttrs['aclselect'] = field.disabledAttributes
+    window.typeUserDisabledAttrs[field.field.name] = field.disabledAttributes
   }
   window.fields.push(field.field)
 }
